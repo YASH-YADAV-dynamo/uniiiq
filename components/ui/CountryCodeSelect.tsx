@@ -36,12 +36,12 @@ export default function CountryCodeSelect({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-[48px] w-full items-center justify-between gap-2 rounded border border-gray-300 bg-white px-3 py-[14px] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="flex h-[40px] w-full items-center justify-between gap-2 rounded border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       >
         <span>{selectedCountry.flag}</span>
-        <span>{selectedCountry.code}</span>
+        <span className="text-gray-900">{selectedCountry.code}</span>
         <svg
-          className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`h-4 w-4 transition-transform text-gray-900 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

@@ -91,17 +91,28 @@ export default function SignUpPage() {
       </div>
 
       {/* Right Section - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-4 lg:py-4 lg:pl-1 lg:-ml-3 overflow-x-visible">
+      <div className="w-full lg:w-1/2 flex items-start justify-center px-4 sm:px-6 py-4 lg:py-4 lg:pl-1 lg:-ml-3 overflow-x-visible overflow-y-auto">
         <div className="w-full max-w-full sm:max-w-[648px] lg:w-[714px] lg:max-w-[714px] rounded-[14px] border border-gray-300 bg-white pt-[30px] pr-6 pb-[30px] pl-[34px] flex flex-col">
           {/* Mobile Logo */}
           <div className="lg:hidden mb-8">
             <UniiqLogo />
           </div>
 
-          <h2 className="text-3xl font-bold text-black mb-6 text-left">Sign up</h2>
+          <h2 
+            className="text-gray-900 mb-5 text-left"
+            style={{
+              fontFamily: "var(--font-plus-jakarta-sans)",
+              fontWeight: 700,
+              fontSize: "24px",
+              lineHeight: "100%",
+              letterSpacing: "0%",
+            }}
+          >
+            Sign up
+          </h2>
 
           {/* Social Login Buttons */}
-          <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-6">
+          <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-5">
             <button
               type="button"
               className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4"
@@ -150,19 +161,26 @@ export default function SignUpPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-gray-300"></div>
-            <span className="text-sm text-gray-500">or sign in with</span>
+            <span className="text-xs text-gray-500">or sign in with</span>
             <div className="flex-1 h-px bg-gray-300"></div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3 flex-1">
+          <form onSubmit={handleSubmit} className="space-y-2.5 flex-1">
             {/* Name */}
-            <div className="mb-3">
+            <div className="mb-2.5">
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-gray-700 mb-1.5"
+                style={{
+                  fontFamily: "var(--font-plus-jakarta-sans)",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
               >
                 Name
               </label>
@@ -174,97 +192,140 @@ export default function SignUpPage() {
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                className="w-full sm:w-[648px] h-[48px] rounded border border-gray-300 px-3 py-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-            {/* Email */}
-            <div className="mb-3">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="johndoe@gmail.com"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                className="w-full sm:w-[648px] h-[48px] rounded border border-gray-300 px-3 py-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Mobile Number */}
-            <div className="mb-3">
-              <label
-                htmlFor="mobile"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Mobile Number
-              </label>
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-[648px]">
-                <div className="w-full sm:w-auto sm:min-w-[120px]">
-                  <CountryCodeSelect
-                    value={formData.countryCode}
-                    onChange={(code) =>
-                      setFormData((prev) => ({ ...prev, countryCode: code }))
-                    }
-                  />
-                </div>
+            {/* Email and Mobile Number - Side by Side */}
+            <div className="flex flex-col lg:flex-row gap-4 mb-3">
+              {/* Email */}
+              <div className="flex-1">
+                <label
+                  htmlFor="email"
+                  className="block text-gray-700 mb-1.5"
+                style={{
+                  fontFamily: "var(--font-plus-jakarta-sans)",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
+                >
+                  Email Address
+                </label>
                 <input
-                  type="tel"
-                  id="mobile"
-                  name="mobile"
-                  placeholder="(999) 999-9999"
-                  value={formData.mobile}
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="johndoe@gmail.com"
+                  value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="flex-1 w-full sm:w-auto h-[48px] rounded border border-gray-300 px-3 py-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div className="flex-1">
+                <label
+                  htmlFor="mobile"
+                  className="block text-gray-700 mb-1.5"
+                style={{
+                  fontFamily: "var(--font-plus-jakarta-sans)",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
+                >
+                  Mobile Number
+                </label>
+                <div className="flex flex-row gap-2 w-full">
+                  <div className="w-auto min-w-[120px]">
+                    <CountryCodeSelect
+                      value={formData.countryCode}
+                      onChange={(code) =>
+                        setFormData((prev) => ({ ...prev, countryCode: code }))
+                      }
+                    />
+                  </div>
+                  <input
+                    type="tel"
+                    id="mobile"
+                    name="mobile"
+                    placeholder="(999) 999-9999"
+                    value={formData.mobile}
+                    onChange={handleInputChange}
+                    required
+                    className="flex-1 w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Password and Confirm Password - Side by Side */}
+            <div className="flex flex-col lg:flex-row gap-4 mb-3">
+              {/* Password */}
+              <div className="flex-1">
+                <label
+                  htmlFor="password"
+                  className="block text-gray-700 mb-1.5"
+                style={{
+                  fontFamily: "var(--font-plus-jakarta-sans)",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
+                >
+                  Password
+                </label>
+                <PasswordInput
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              {/* Confirm Password */}
+              <div className="flex-1">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-gray-700 mb-1.5"
+                style={{
+                  fontFamily: "var(--font-plus-jakarta-sans)",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
+                >
+                  Confirm Password
+                </label>
+                <PasswordInput
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  required
                 />
               </div>
             </div>
 
-            {/* Password */}
-            <div className="mb-3">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Password
-              </label>
-              <PasswordInput
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            {/* Confirm Password */}
-            <div className="mb-3">
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Confirm Password
-              </label>
-              <PasswordInput
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
             {/* Upload Profile Picture */}
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="mb-2.5">
+              <label 
+                className="block text-gray-700 mb-1.5"
+                style={{
+                  fontFamily: "var(--font-plus-jakarta-sans)",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
+              >
                 Upload Profile Picture
               </label>
               <FileUpload
@@ -317,11 +378,11 @@ export default function SignUpPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full sm:w-auto sm:min-w-[105px] h-[37px] bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900 transition-colors flex items-center justify-center gap-[6px] pt-2 pr-3 pb-2 pl-4 mt-1"
+              className="w-full sm:w-auto sm:min-w-[95px] h-[34px] bg-gray-800 text-white rounded-md text-sm font-medium hover:bg-gray-900 transition-colors flex items-center justify-center gap-[6px] pt-1.5 pr-3 pb-1.5 pl-4 mt-1"
             >
               Submit
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -337,7 +398,7 @@ export default function SignUpPage() {
           </form>
 
           {/* Sign In Link */}
-          <p className="mt-6 text-left text-sm text-gray-600">
+          <p className="mt-5 text-left text-xs text-gray-600">
             Have an account?{" "}
             <Link href="/signin" className="text-blue-600 font-medium hover:underline">
               Sign in

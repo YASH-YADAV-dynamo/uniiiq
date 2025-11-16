@@ -78,7 +78,18 @@ export default function SignInPage() {
             <UniiqLogo />
           </div>
 
-          <h2 className="text-3xl font-bold text-black mb-6 text-left">Sign in</h2>
+          <h2 
+            className="text-gray-900 mb-6 text-left"
+            style={{
+              fontFamily: "var(--font-plus-jakarta-sans)",
+              fontWeight: 700,
+              fontSize: "28px",
+              lineHeight: "100%",
+              letterSpacing: "0%",
+            }}
+          >
+            Sign in
+          </h2>
 
           {/* Social Login Buttons */}
           <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-5">
@@ -142,7 +153,14 @@ export default function SignInPage() {
             <div className="mb-3">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-gray-700 mb-2"
+                style={{
+                  fontFamily: "var(--font-plus-jakarta-sans)",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
               >
                 Email Address
               </label>
@@ -154,7 +172,7 @@ export default function SignInPage() {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                className="w-full sm:w-[648px] h-[48px] rounded border border-gray-300 px-3 py-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full sm:w-[648px] h-[44px] rounded border border-gray-300 px-3 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -162,7 +180,14 @@ export default function SignInPage() {
             <div className="mb-3">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-gray-700 mb-2"
+                style={{
+                  fontFamily: "var(--font-plus-jakarta-sans)",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
               >
                 Password
               </label>

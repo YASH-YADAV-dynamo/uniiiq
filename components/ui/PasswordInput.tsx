@@ -31,7 +31,7 @@ export default function PasswordInput({
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full sm:w-[648px] h-[48px] rounded border border-gray-300 px-3 py-[14px] pr-10 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
       <button
         type="button"

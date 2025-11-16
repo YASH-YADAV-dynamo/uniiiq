@@ -54,9 +54,13 @@ export default function FileUpload({
   return (
     <div>
       <div
-        className={`flex cursor-pointer flex-col items-center justify-center rounded border-2 border-dashed border-gray-300 bg-gray-50 p-6 transition-colors w-full sm:w-[648px] ${
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-[12px] border border-dashed border-gray-300 bg-gray-50 transition-colors w-full sm:w-[648px] h-[100px] pt-[14px] pr-4 pb-[14px] pl-4 gap-3 ${
           dragActive ? "border-blue-500 bg-blue-50" : "hover:border-gray-400"
         }`}
+        style={{
+          borderStyle: "dashed",
+          borderImage: "none",
+        }}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -71,7 +75,7 @@ export default function FileUpload({
           className="hidden"
         />
         <svg
-          className="mb-2 h-8 w-8 text-gray-400"
+          className="h-6 w-6 text-gray-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -83,8 +87,8 @@ export default function FileUpload({
             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
           />
         </svg>
-        <p className="text-sm text-gray-600">Click to upload</p>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="text-xs text-gray-600">Click to upload</p>
+        <p className="text-[10px] text-gray-500">
           PNG, JPEG (max {maxSize}mb)
         </p>
       </div>
