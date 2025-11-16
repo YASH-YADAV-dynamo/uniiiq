@@ -71,17 +71,17 @@ export default function SignInPage() {
       </div>
 
       {/* Right Section - Form */}
-      <div className="w-full lg:w-1/2 flex items-start justify-center px-4 sm:px-6 py-4 lg:pt-10 lg:pb-4 lg:pl-1 lg:-ml-3 overflow-x-visible">
-        <div className="w-full max-w-full sm:max-w-[648px] lg:w-[714px] lg:max-w-[714px] rounded-[14px] border border-gray-300 bg-white pt-[30px] pr-6 pb-[30px] pl-[34px] flex flex-col lg:h-[calc(100vh-80px)] overflow-y-auto overflow-x-hidden">
+      <div className="w-full lg:w-1/2 flex items-start justify-center px-4 sm:px-6 py-4 lg:py-4 lg:pl-1 lg:-ml-3 overflow-x-visible overflow-y-hidden lg:h-[calc(100vh-20px)]">
+        <div className="w-full max-w-full sm:max-w-[648px] lg:w-[714px] lg:max-w-[714px] lg:h-full lg:my-4 rounded-[14px] border border-gray-300 bg-white pt-[30px] pr-6 pb-[30px] pl-[34px] flex flex-col overflow-hidden">
           {/* Mobile Logo */}
           <div className="lg:hidden mb-8">
             <UniiqLogo />
           </div>
 
-          <h2 className="text-3xl font-bold text-black mb-8 text-left">Sign in</h2>
+          <h2 className="text-3xl font-bold text-black mb-6 text-left">Sign in</h2>
 
           {/* Social Login Buttons */}
-          <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-6">
+          <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-5">
             <button
               type="button"
               className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4"
@@ -130,16 +130,16 @@ export default function SignInPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-gray-300"></div>
             <span className="text-sm text-gray-500">or sign in with</span>
             <div className="flex-1 h-px bg-gray-300"></div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {/* Email */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -159,7 +159,7 @@ export default function SignInPage() {
             </div>
 
             {/* Password */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-2"

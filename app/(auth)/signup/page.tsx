@@ -91,14 +91,14 @@ export default function SignUpPage() {
       </div>
 
       {/* Right Section - Form */}
-      <div className="w-full lg:w-1/2 flex items-start justify-center px-4 sm:px-6 py-4 lg:pt-10 lg:pb-4 lg:pl-1 lg:-ml-3 overflow-x-visible">
-        <div className="w-full max-w-full sm:max-w-[648px] lg:w-[714px] lg:max-w-[714px] rounded-[14px] border border-gray-300 bg-white pt-[30px] pr-6 pb-[30px] pl-[34px] flex flex-col lg:h-[calc(100vh-80px)] overflow-y-auto overflow-x-hidden">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-4 lg:py-4 lg:pl-1 lg:-ml-3 overflow-x-visible">
+        <div className="w-full max-w-full sm:max-w-[648px] lg:w-[714px] lg:max-w-[714px] rounded-[14px] border border-gray-300 bg-white pt-[30px] pr-6 pb-[30px] pl-[34px] flex flex-col">
           {/* Mobile Logo */}
           <div className="lg:hidden mb-8">
             <UniiqLogo />
           </div>
 
-          <h2 className="text-3xl font-bold text-black mb-8">Sign up</h2>
+          <h2 className="text-3xl font-bold text-black mb-6 text-left">Sign up</h2>
 
           {/* Social Login Buttons */}
           <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-6">
@@ -157,9 +157,9 @@ export default function SignUpPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 flex-1">
             {/* Name */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -179,7 +179,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Email */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -199,7 +199,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Mobile Number */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label
                 htmlFor="mobile"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -229,7 +229,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Password */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -246,7 +246,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Confirm Password */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -263,7 +263,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Upload Profile Picture */}
-            <div className="mb-4">
+            <div className="mb-3">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Upload Profile Picture
               </label>
@@ -275,7 +275,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Checkboxes */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -317,7 +317,7 @@ export default function SignUpPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full sm:w-auto sm:min-w-[105px] h-[37px] bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900 transition-colors flex items-center justify-center gap-[6px] pt-2 pr-3 pb-2 pl-4"
+              className="w-full sm:w-auto sm:min-w-[105px] h-[37px] bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900 transition-colors flex items-center justify-center gap-[6px] pt-2 pr-3 pb-2 pl-4 mt-1"
             >
               Submit
               <svg

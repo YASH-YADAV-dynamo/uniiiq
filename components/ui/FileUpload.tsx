@@ -54,7 +54,7 @@ export default function FileUpload({
   return (
     <div>
       <div
-        className={`flex cursor-pointer flex-col items-center justify-center rounded border-2 border-dashed border-gray-300 bg-gray-50 p-8 transition-colors w-full sm:w-[648px] ${
+        className={`flex cursor-pointer flex-col items-center justify-center rounded border-2 border-dashed border-gray-300 bg-gray-50 p-6 transition-colors w-full sm:w-[648px] ${
           dragActive ? "border-blue-500 bg-blue-50" : "hover:border-gray-400"
         }`}
         onDragEnter={handleDrag}
