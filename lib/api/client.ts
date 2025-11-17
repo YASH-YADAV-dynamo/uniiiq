@@ -13,8 +13,8 @@ export class ApiClient {
     options: RequestInit = {}
   ): Promise<{ success: boolean; data?: T; error?: string }> {
     const token = this.getToken();
-    const headers: HeadersInit = {
-      ...options.headers,
+    const headers: Record<string, string> = {
+      ...(options.headers as Record<string, string>),
     };
 
     if (token) {

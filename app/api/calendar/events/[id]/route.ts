@@ -5,15 +5,16 @@ import { requireAuth } from "@/lib/api/auth";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request);
+    const { id } = await params;
     const body = await request.json();
     const { title, description, start_time, end_time, color } = body;
 
-    const { data, error } = await supabaseAdmin
-      .from("calendar_events")
+    const { data, error } = await (supabaseAdmin
+      .from("calendar_events") as any)
       .update({
         title,
         description,
@@ -22,7 +23,7 @@ export async function PUT(
         color,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id)
       .select()
       .single();
@@ -47,15 +48,16 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request);
+    const { id } = await params;
 
     const { error } = await supabaseAdmin
       .from("calendar_events")
       .delete()
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id);
 
     if (error) {

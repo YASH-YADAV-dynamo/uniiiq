@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         country_code: countryCode || null,
         profile_picture_url: profilePictureUrl,
         subscribe_newsletter: subscribeNewsletter || false,
-      });
+      } as any);
 
     if (profileError) {
       console.error("Profile creation error:", profileError);
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       universities_shortlisted: 0,
       extracurriculars_count: 0,
       summer_courses_count: 0,
-    });
+    } as any);
 
     return ApiResponse.success({
       user: authData.user,

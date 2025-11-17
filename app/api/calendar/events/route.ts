@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         start_time,
         end_time,
         color: color || "blue",
-      })
+      } as any)
       .select()
       .single();
 

@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // Update existing
-      const { data, error } = await supabaseAdmin
-        .from("user_preferences")
+      const { data, error } = await (supabaseAdmin
+        .from("user_preferences") as any)
         .update({
           personal_info: personal_info || null,
           academic_preferences: academic_preferences || null,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           academic_preferences: academic_preferences || null,
           goals: goals || null,
           budget: budget || null,
-        })
+        } as any)
         .select()
         .single();
 

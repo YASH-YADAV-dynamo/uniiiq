@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
         profile_picture_url: data.user.user_metadata?.avatar_url || null,
         subscribe_newsletter: false,
-      });
+      } as any);
 
       // Initialize dashboard stats
       await supabaseAdmin.from("dashboard_stats").insert({
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
         universities_shortlisted: 0,
         extracurriculars_count: 0,
         summer_courses_count: 0,
-      });
+      } as any);
     }
 
     return ApiResponse.success({

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Save messages to database
     const lastUserMessage = recentMessages[recentMessages.length - 1];
     if (lastUserMessage?.role === "user") {
-      await supabaseAdmin.from("chat_messages").insert([
+      await (supabaseAdmin.from("chat_messages") as any).insert([
         {
           user_id: user.id,
           role: "user",

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
             universities_shortlisted: 0,
             extracurriculars_count: 0,
             summer_courses_count: 0,
-          })
+          } as any)
           .select()
           .single();
 
@@ -54,8 +54,8 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth(request);
     const body = await request.json();
 
-    const { data, error } = await supabaseAdmin
-      .from("dashboard_stats")
+    const { data, error } = await (supabaseAdmin
+      .from("dashboard_stats") as any)
       .update({
         ...body,
         updated_at: new Date().toISOString(),
