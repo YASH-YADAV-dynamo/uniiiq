@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import UniiqLogo from "@/components/ui/UniiqLogo";
 import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 import PasswordInput from "@/components/ui/PasswordInput";
 import FileUpload from "@/components/ui/FileUpload";
+import { signInWithGoogle } from "@/lib/supabase/auth-helpers";
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -17,9 +19,13 @@ export default function SignUpPage() {
     password: "",
     confirmPassword: "",
     profilePicture: null as File | null,
+    profilePictureUrl: null as string | null,
     subscribeNewsletter: false,
     agreeToTerms: false,
   });
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -33,14 +39,168 @@ export default function SignUpPage() {
     }
   };
 
-  const handleFileSelect = (file: File | null) => {
-    setFormData((prev) => ({ ...prev, profilePicture: file }));
+  const handleFileSelect = async (file: File | null) => {
+    if (!file) {
+      setFormData((prev) => ({ 
+        ...prev, 
+        profilePicture: null,
+        profilePictureUrl: null 
+      }));
+      setUploadMessage(null);
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setUploadMessage("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadMessage("File size must be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadMessage(null);
+
+    try {
+      // Upload via API route
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+      uploadFormData.append("userId", "temp"); // Temporary, will be updated after signup
+
+      const response = await fetch("/api/upload/profile-picture", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to upload file");
+      }
+
+      setFormData((prev) => ({ 
+        ...prev, 
+        profilePicture: file,
+        profilePictureUrl: data.data.url 
+      }));
+      setUploadMessage("✓ Uploaded successfully");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      setUploadMessage(error.message || "Upload failed");
+      setFormData((prev) => ({ 
+        ...prev, 
+        profilePicture: null,
+        profilePictureUrl: null 
+      }));
+    } finally {
+      setIsUploading(false);
+    }
   };
+
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement Supabase signup logic
-    console.log("Form submitted:", formData);
+    setError(null);
+    setIsLoading(true);
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      setError("Please agree to the Terms & Conditions");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Use API route which uses Admin API to bypass rate limits
+      const signupFormData = new FormData();
+      signupFormData.append("email", formData.email);
+      signupFormData.append("password", formData.password);
+      signupFormData.append("name", formData.name);
+      signupFormData.append("mobile", formData.mobile);
+      signupFormData.append("countryCode", formData.countryCode);
+      signupFormData.append("subscribeNewsletter", formData.subscribeNewsletter.toString());
+      
+      // Add profile picture if uploaded
+      if (formData.profilePicture) {
+        signupFormData.append("profilePicture", formData.profilePicture);
+      }
+
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        body: signupFormData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage = errorData.error || "Failed to create account";
+        
+        // Check if it's a rate limit error
+        if (response.status === 429 || errorMessage.includes("rate limit") || errorMessage.includes("Too Many Requests")) {
+          throw new Error("Too many signup attempts. Please wait a moment and try again.");
+        }
+        
+        // Check if it's a database setup error
+        if (errorMessage.includes("table") || errorMessage.includes("schema cache")) {
+          throw new Error("Database not set up. Please contact support or check the setup instructions.");
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create account");
+      }
+
+      const { user, session } = result.data;
+
+      if (!user) {
+        throw new Error("Failed to create user account");
+      }
+
+      // Store session token if available
+      if (session?.access_token) {
+        localStorage.setItem("supabase_token", session.access_token);
+        // Redirect to dashboard on success
+        router.push("/dashboard");
+      } else {
+        // If no session (shouldn't happen with admin API, but handle it)
+        setError("Account created! Please sign in to continue.");
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      setError(err.message || "An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError(null);
+    setIsGoogleLoading(true);
+
+    try {
+      await signInWithGoogle();
+      // Redirect will happen automatically via OAuth callback
+    } catch (err: any) {
+      setError(err.message || "Failed to sign up with Google");
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -111,12 +271,14 @@ export default function SignUpPage() {
             Sign up
           </h2>
 
-          {/* Social Login Buttons */}
-          <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-5">
-            <button
-              type="button"
-              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4"
-            >
+                  {/* Social Login Buttons */}
+                  <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-5">
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignUp}
+                      disabled={isGoogleLoading || isLoading}
+                      className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -139,7 +301,9 @@ export default function SignUpPage() {
             </button>
             <button
               type="button"
-              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4"
+              disabled
+              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-400 cursor-not-allowed transition-colors font-medium py-[9px] px-4 opacity-50"
+              title="Coming soon"
             >
               <Image
                 src="/facebook.svg"
@@ -152,7 +316,9 @@ export default function SignUpPage() {
             </button>
             <button
               type="button"
-              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4"
+              disabled
+              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-400 cursor-not-allowed transition-colors font-medium py-[9px] px-4 opacity-50"
+              title="Coming soon"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
@@ -167,8 +333,15 @@ export default function SignUpPage() {
             <div className="flex-1 h-px bg-gray-300"></div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-2.5 flex-1">
+                  {/* Error Message */}
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Form */}
+                  <form onSubmit={handleSubmit} className="space-y-2.5 flex-1">
             {/* Name */}
             <div className="mb-2.5">
               <label
@@ -328,11 +501,59 @@ export default function SignUpPage() {
               >
                 Upload Profile Picture
               </label>
-              <FileUpload
-                onFileSelect={handleFileSelect}
-                accept="image/png,image/jpeg"
-                maxSize={5}
-              />
+              <div className="relative w-full sm:w-[648px]">
+                {formData.profilePictureUrl ? (
+                  <div className="relative rounded-[12px] border border-dashed border-green-300 bg-white w-full h-[100px] flex items-center justify-center overflow-hidden" style={{ maxHeight: '100px' }}>
+                    <img
+                      src={formData.profilePictureUrl}
+                      alt="Profile preview"
+                      className="object-contain"
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto'
+                      }}
+                    />
+                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded z-10">
+                      ✓ Uploaded
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData((prev) => ({ 
+                          ...prev, 
+                          profilePicture: null,
+                          profilePictureUrl: null 
+                        }));
+                        setUploadMessage(null);
+                      }}
+                      className="absolute top-2 left-2 text-gray-600 hover:text-red-600 text-xs underline z-10"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <FileUpload
+                      onFileSelect={handleFileSelect}
+                      accept="image/png,image/jpeg"
+                      maxSize={5}
+                    />
+                    {isUploading && (
+                      <div className="mt-2 text-xs text-blue-600">
+                        Uploading...
+                      </div>
+                    )}
+                    {uploadMessage && !uploadMessage.includes("✓") && (
+                      <div className="mt-2 text-xs text-red-600">
+                        {uploadMessage}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Checkboxes */}
@@ -375,26 +596,29 @@ export default function SignUpPage() {
               </label>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full sm:w-auto sm:min-w-[95px] h-[34px] bg-gray-800 text-white rounded-md text-sm font-medium hover:bg-gray-900 transition-colors flex items-center justify-center gap-[6px] pt-1.5 pr-3 pb-1.5 pl-4 mt-1"
-            >
-              Submit
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full sm:w-auto sm:min-w-[95px] h-[34px] bg-gray-800 text-white rounded-md text-sm font-medium hover:bg-gray-900 transition-colors flex items-center justify-center gap-[6px] pt-1.5 pr-3 pb-1.5 pl-4 mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? "Creating..." : "Submit"}
+                      {!isLoading && (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      )}
+                    </button>
           </form>
 
           {/* Sign In Link */}

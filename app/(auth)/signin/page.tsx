@@ -3,10 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import UniiqLogo from "@/components/ui/UniiqLogo";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { signInWithGoogle, signInWithEmail } from "@/lib/supabase/auth-helpers";
 
 export default function SignInPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -17,10 +20,76 @@ export default function SignInPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement Supabase signin logic
-    console.log("Form submitted:", formData);
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const { session, user } = await signInWithEmail(formData.email, formData.password);
+
+      if (!user) {
+        throw new Error("Failed to sign in. Please check your credentials.");
+      }
+
+      if (!session) {
+        throw new Error("Session not created. Please check your email for confirmation or try again.");
+      }
+
+      // Store session token
+      localStorage.setItem("supabase_token", session.access_token);
+
+      // Ensure user profile exists (in case it wasn't created during signup)
+      try {
+        const response = await fetch("/api/auth/complete-profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            email: user.email || formData.email,
+            name: user.user_metadata?.full_name || user.user_metadata?.name || "",
+            mobile: user.user_metadata?.mobile || null,
+            countryCode: user.user_metadata?.country_code || null,
+            subscribeNewsletter: false,
+            profilePictureUrl: user.user_metadata?.avatar_url || null,
+          }),
+        });
+
+        // Don't fail signin if profile update fails
+        if (!response.ok) {
+          console.warn("Profile update failed during signin, but continuing...");
+        }
+      } catch (profileError) {
+        console.warn("Profile update error during signin:", profileError);
+        // Continue with signin even if profile update fails
+      }
+
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setIsGoogleLoading(true);
+
+    try {
+      await signInWithGoogle();
+      // Redirect will happen automatically via OAuth callback
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in with Google");
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -91,12 +160,14 @@ export default function SignInPage() {
             Sign in
           </h2>
 
-          {/* Social Login Buttons */}
-          <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-5">
-            <button
-              type="button"
-              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4"
-            >
+                  {/* Social Login Buttons */}
+                  <div className="flex flex-col sm:flex-row w-full sm:w-[656px] sm:h-[36.67px] gap-[6px] mb-5">
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      disabled={isGoogleLoading || isLoading}
+                      className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -119,7 +190,9 @@ export default function SignInPage() {
             </button>
             <button
               type="button"
-              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4"
+              disabled
+              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-400 cursor-not-allowed transition-colors font-medium py-[9px] px-4 opacity-50"
+              title="Coming soon"
             >
               <Image
                 src="/facebook.svg"
@@ -132,7 +205,9 @@ export default function SignInPage() {
             </button>
             <button
               type="button"
-              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium py-[9px] px-4"
+              disabled
+              className="flex-1 sm:flex-none sm:w-[214.67px] h-[36.67px] flex items-center justify-center gap-[10px] rounded-[6.22px] border-[0.78px] border-gray-300 bg-white text-gray-400 cursor-not-allowed transition-colors font-medium py-[9px] px-4 opacity-50"
+              title="Coming soon"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
@@ -147,8 +222,15 @@ export default function SignInPage() {
             <div className="flex-1 h-px bg-gray-300"></div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3">
+                  {/* Error Message */}
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Form */}
+                  <form onSubmit={handleSubmit} className="space-y-3">
             {/* Email */}
             <div className="mb-3">
               <label
@@ -210,26 +292,29 @@ export default function SignInPage() {
               </Link>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full sm:w-auto sm:min-w-[105px] h-[37px] bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900 transition-colors flex items-center justify-center gap-[6px] mt-1 pt-2 pr-3 pb-2 pl-4"
-            >
-              Submit
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full sm:w-auto sm:min-w-[105px] h-[37px] bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900 transition-colors flex items-center justify-center gap-[6px] mt-1 pt-2 pr-3 pb-2 pl-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? "Signing in..." : "Submit"}
+                      {!isLoading && (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      )}
+                    </button>
           </form>
 
           {/* Sign Up Link */}
