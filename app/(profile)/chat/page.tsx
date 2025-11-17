@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 interface Message {
   id: string;
@@ -71,12 +72,18 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("supabase_token");
+      // Get current session from Supabase (handles token refresh automatically)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error("Please sign in to continue");
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           messages: [...messages, userMessage].map((msg) => ({
@@ -200,7 +207,7 @@ export default function ChatPage() {
 
       {/* Chat Container */}
       <div className="flex-1 overflow-hidden p-6">
-        <div className="max-w-4xl mx-auto h-full flex flex-col border-2 border-dashed border-blue-300 rounded-lg bg-white p-6">
+        <div className="max-w-4xl mx-auto h-full flex flex-col border-2 border-solid border-gray-300 rounded-lg bg-white p-6">
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto space-y-4 mb-4">
             {messages.map((message) => (
@@ -223,13 +230,13 @@ export default function ChatPage() {
                   }`}
                 >
                   <div
-                    className={`rounded-lg px-4 py-3 max-w-[80%] ${
+                    className={`rounded-lg px-4 py-3 max-w-[80%] border border-solid ${
                       message.role === "assistant"
-                        ? "bg-green-100 text-gray-900"
-                        : "bg-white border border-gray-200 text-gray-900"
+                        ? "bg-green-100 text-black border-gray-300"
+                        : "bg-white text-black border-gray-300"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-black">
                       {message.content}
                     </p>
                   </div>
@@ -262,7 +269,7 @@ export default function ChatPage() {
             {isLoading && (
               <div className="flex gap-3 flex-row-reverse">
                 <div className="flex flex-col items-end">
-                  <div className="bg-green-100 rounded-lg px-4 py-3">
+                  <div className="bg-green-100 rounded-lg px-4 py-3 border border-solid border-gray-300">
                     <div className="flex gap-1">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div
@@ -289,7 +296,7 @@ export default function ChatPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your response here..."
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="flex-1 px-4 py-3 border border-solid border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-black"
               disabled={isLoading}
             />
             <button
@@ -299,16 +306,10 @@ export default function ChatPage() {
             >
               <svg
                 className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
+                fill="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
             </button>
           </div>

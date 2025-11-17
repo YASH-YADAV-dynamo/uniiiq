@@ -10,39 +10,45 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = searchParams.get("code");
+      // Check for error in URL
       const error = searchParams.get("error");
       const errorDescription = searchParams.get("error_description");
-
+      
       if (error) {
         router.push(`/signin?error=${error}${errorDescription ? `&message=${encodeURIComponent(errorDescription)}` : ""}`);
         return;
       }
 
-      if (code) {
-        try {
-          // Exchange code for session
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      try {
+        // With detectSessionInUrl: true, Supabase automatically processes the OAuth callback
+        // Wait a moment for Supabase to process the URL and exchange the code
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Get the session (Supabase should have automatically exchanged the code)
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-          if (exchangeError) {
-            throw exchangeError;
-          }
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
+        }
 
-          if (data.session) {
-            // Store session token
-            localStorage.setItem("supabase_token", data.session.access_token);
-            
-            // Redirect to dashboard
+        if (session) {
+          localStorage.setItem("supabase_token", session.access_token);
+          router.push("/dashboard");
+        } else {
+          // If still no session, wait a bit more and try again
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          if (retrySession) {
+            localStorage.setItem("supabase_token", retrySession.access_token);
             router.push("/dashboard");
           } else {
-            throw new Error("No session received");
+            router.push("/signin?error=no_session&message=Authentication failed. Please try again.");
           }
-        } catch (err: any) {
-          console.error("Auth callback error:", err);
-          router.push(`/signin?error=auth_failed&message=${encodeURIComponent(err.message || "Authentication failed")}`);
         }
-      } else {
-        router.push("/signin");
+      } catch (err: any) {
+        console.error("Auth callback error:", err);
+        router.push(`/signin?error=auth_failed&message=${encodeURIComponent(err.message || "Authentication failed")}`);
       }
     };
 
@@ -73,3 +79,4 @@ export default function AuthCallback() {
     </Suspense>
   );
 }
+

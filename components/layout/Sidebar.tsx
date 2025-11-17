@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -91,22 +91,39 @@ export default function Sidebar() {
     setIsMobileOpen(!isMobileOpen);
   };
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileOpen]);
+
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={toggleMobile}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 text-gray-300 rounded-md"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+      {/* Mobile Menu Button - Elegant Hamburger (Outside when closed) */}
+      {!isMobileOpen && (
+        <button
+          onClick={toggleMobile}
+          className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white shadow-lg rounded-xl border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+          aria-label="Toggle menu"
+        >
+          <div className="w-6 h-5 flex flex-col justify-between">
+            <span className="block h-0.5 w-full bg-gray-800 rounded-full transition-all duration-300" />
+            <span className="block h-0.5 w-full bg-gray-800 rounded-full transition-all duration-300" />
+            <span className="block h-0.5 w-full bg-gray-800 rounded-full transition-all duration-300" />
+          </div>
+        </button>
+      )}
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay - Smooth fade */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
           onClick={toggleMobile}
         />
       )}
@@ -116,9 +133,9 @@ export default function Sidebar() {
         className={`
           fixed lg:static inset-y-0 left-0 z-40
           bg-gray-900 text-gray-300
-          transition-transform duration-300 ease-in-out
+          transition-transform duration-300 ease-out
           ${isCollapsed ? "lg:w-20" : "w-56"}
-          ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${isMobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         <div className="flex flex-col h-full">
@@ -136,6 +153,18 @@ export default function Sidebar() {
               </Link>
             )}
             <div className="flex items-center gap-2 ml-auto">
+              {/* Mobile Close Button - Inside Navbar */}
+              <button
+                onClick={toggleMobile}
+                className="lg:hidden p-2 rounded-lg bg-gray-800 hover:bg-gray-700 active:scale-95 transition-all duration-200 text-gray-300 hover:text-white"
+                aria-label="Close menu"
+              >
+                <div className="w-5 h-5 flex flex-col justify-center items-center relative">
+                  <span className="block h-0.5 w-full bg-gray-300 rounded-full rotate-45 absolute transition-all duration-300" />
+                  <span className="block h-0.5 w-full bg-gray-300 rounded-full -rotate-45 absolute transition-all duration-300" />
+                </div>
+              </button>
+              {/* Desktop Collapse Button */}
               <button
                 onClick={toggleCollapse}
                 className="hidden lg:flex p-1.5 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
@@ -151,24 +180,6 @@ export default function Sidebar() {
                     strokeLinejoin="round"
                     strokeWidth={2}
                     d={isCollapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={toggleMobile}
-                className="lg:hidden p-1.5 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
-              >
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
               </button>
