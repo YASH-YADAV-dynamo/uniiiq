@@ -1,10 +1,14 @@
 import { supabase } from "./client";
 
 export async function signInWithGoogle() {
+  // Use environment variable if available, otherwise use current origin
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+    (typeof window !== "undefined" ? window.location.origin : "");
+  
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: `${baseUrl}/auth/callback`,
       queryParams: {
         access_type: "offline",
         prompt: "consent",

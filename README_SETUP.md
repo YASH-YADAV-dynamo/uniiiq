@@ -82,25 +82,32 @@ If you need to create it manually:
    - Application type: Web application
    - Authorized redirect URIs: 
      - `https://your-project.supabase.co/auth/v1/callback`
-     - `http://localhost:3000/api/auth/callback` (for local development)
+     - `http://localhost:3000/auth/callback` (for local development)
+     - `https://your-vercel-app.vercel.app/auth/callback` (for production/Vercel)
 7. Copy the Client ID and Client Secret
 
 8. In Supabase Dashboard:
    - Go to Authentication → Providers
    - Enable Google provider
    - Enter your Google Client ID and Client Secret
+   - **Important:** Go to Authentication → URL Configuration
+   - Add your redirect URLs:
+     - `http://localhost:3000/auth/callback` (for local development)
+     - `https://your-vercel-app.vercel.app/auth/callback` (for production/Vercel)
    - Save
 
 ## 6. Configure Environment Variables
 
-1. Copy `.env.example` to `.env.local`
+1. Create `.env.local` file
 2. Fill in your Supabase credentials:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    OPENAI_API_KEY=your_openai_api_key
+   NEXT_PUBLIC_APP_URL=https://your-vercel-app.vercel.app
    ```
+   **Note:** `NEXT_PUBLIC_APP_URL` is optional - if not set, it will use `window.location.origin` automatically. Set it in Vercel environment variables for production.
 
 ## 7. Test the Setup
 
