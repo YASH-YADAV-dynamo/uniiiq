@@ -42,6 +42,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { personal_info, academic_preferences, goals, budget } = body;
 
+    // Log the received data structure for verification
+    console.log("Saving preferences for user:", user.id);
+    console.log("Personal Info fields:", personal_info ? Object.keys(personal_info) : "null");
+    console.log("Academic Preferences fields:", academic_preferences ? Object.keys(academic_preferences) : "null");
+    console.log("Goals fields:", goals ? Object.keys(goals) : "null");
+    console.log("Budget fields:", budget ? Object.keys(budget) : "null");
+
     // Check if preferences exist
     const { data: existing } = await supabaseAdmin
       .from("user_preferences")

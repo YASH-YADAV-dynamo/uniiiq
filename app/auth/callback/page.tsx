@@ -35,14 +35,14 @@ function AuthCallbackContent() {
         if (session) {
           localStorage.setItem("supabase_token", session.access_token);
           // Use window.location for a hard redirect to ensure it works on Vercel
-          window.location.href = "/dashboard";
+          window.location.href = "/preferences";
         } else {
           // If still no session, wait a bit more and try again
           await new Promise(resolve => setTimeout(resolve, 1000));
           const { data: { session: retrySession } } = await supabase.auth.getSession();
           if (retrySession) {
             localStorage.setItem("supabase_token", retrySession.access_token);
-            window.location.href = "/dashboard";
+            window.location.href = "/preferences";
           } else {
             router.push("/signin?error=no_session&message=Authentication failed. Please try again.");
           }

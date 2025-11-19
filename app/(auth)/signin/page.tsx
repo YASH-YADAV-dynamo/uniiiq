@@ -71,7 +71,7 @@ export default function SignInPage() {
         // Continue with signin even if profile update fails
       }
 
-      router.push("/dashboard");
+      router.push("/preferences");
     } catch (err: any) {
       setError(err.message || "An error occurred. Please try again.");
     } finally {

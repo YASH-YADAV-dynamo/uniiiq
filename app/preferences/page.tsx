@@ -1,18 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import UniiqLogo from "@/components/ui/UniiqLogo";
+import { supabase } from "@/lib/supabase/client";
 
 export default function PreferencesPage() {
+  const router = useRouter();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["personal"]));
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [personalFormData, setPersonalFormData] = useState({
-    fullName: "John",
-    age: "18 years",
+    fullName: "",
+    age: "",
     currentGrade: "",
-    schoolName: "Doo",
-    citizenship: "Text",
+    schoolName: "",
+    citizenship: "",
   });
   const [academicFormData, setAcademicFormData] = useState({
     boardOfEducation: "",
@@ -90,6 +96,235 @@ export default function PreferencesPage() {
     setBudgetFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Load existing preferences
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.error("Not authenticated");
+          setIsLoadingData(false);
+          return;
+        }
+
+        const response = await fetch("/api/preferences", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load preferences");
+        }
+
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          // Load personal info
+          if (result.data.personal_info) {
+            setPersonalFormData((prev) => ({
+              ...prev,
+              ...result.data.personal_info,
+            }));
+          }
+          
+          // Load academic preferences
+          if (result.data.academic_preferences) {
+            const academicData = { ...result.data.academic_preferences };
+            // Convert date strings to YYYY-MM-DD format for date inputs
+            const dateFields = ['satDate', 'actDate', 'apDate', 'psatDate', 'toeflIeltsDate'];
+            dateFields.forEach(field => {
+              if (academicData[field]) {
+                // If date is in dd/mm/yyyy format, convert to YYYY-MM-DD
+                const dateStr = academicData[field];
+                if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                  const [day, month, year] = dateStr.split('/');
+                  academicData[field] = `${year}-${month}-${day}`;
+                } else if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                  // Already in YYYY-MM-DD format
+                  academicData[field] = dateStr;
+                }
+              }
+            });
+            setAcademicFormData((prev) => ({
+              ...prev,
+              ...academicData,
+            }));
+          }
+          
+          // Load goals
+          if (result.data.goals) {
+            setGoalsFormData((prev) => ({
+              ...prev,
+              ...result.data.goals,
+            }));
+          }
+          
+          // Load budget
+          if (result.data.budget) {
+            setBudgetFormData((prev) => ({
+              ...prev,
+              ...result.data.budget,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error loading preferences:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadPreferences();
+  }, []);
+
+  // Save preferences
+  const handleSave = async () => {
+    setIsLoading(true);
+    setSaveMessage(null);
+
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error("Please sign in to save preferences");
+      }
+
+      // Prepare data to send - ensure all fields are included
+      const dataToSave = {
+        personal_info: {
+          fullName: personalFormData.fullName || "",
+          age: personalFormData.age || "",
+          currentGrade: personalFormData.currentGrade || "",
+          schoolName: personalFormData.schoolName || "",
+          citizenship: personalFormData.citizenship || "",
+        },
+        academic_preferences: {
+          boardOfEducation: academicFormData.boardOfEducation || "",
+          subjectsTaken: academicFormData.subjectsTaken || "",
+          gradeSubject: academicFormData.gradeSubject || "",
+          gradeScore: academicFormData.gradeScore || "",
+          awards: academicFormData.awards || "",
+          satScore: academicFormData.satScore || "",
+          satDate: academicFormData.satDate || "",
+          actScore: academicFormData.actScore || "",
+          actDate: academicFormData.actDate || "",
+          apName: academicFormData.apName || "",
+          apScore: academicFormData.apScore || "",
+          apDate: academicFormData.apDate || "",
+          psatScore: academicFormData.psatScore || "",
+          psatDate: academicFormData.psatDate || "",
+          toeflIeltsScore: academicFormData.toeflIeltsScore || "",
+          toeflIeltsDate: academicFormData.toeflIeltsDate || "",
+        },
+        goals: {
+          hoursPerWeek: goalsFormData.hoursPerWeek || 0,
+          goalsDefined: goalsFormData.goalsDefined || "",
+          universitiesToTarget: goalsFormData.universitiesToTarget || "",
+          intendedMajor: goalsFormData.intendedMajor || "",
+          areaOfInterest: goalsFormData.areaOfInterest || "",
+          preferredCountry: goalsFormData.preferredCountry || "",
+          preferredLocationType: goalsFormData.preferredLocationType || "",
+        },
+        budget: {
+          estimatedAnnualBudget: budgetFormData.estimatedAnnualBudget || "",
+          expectedTuitionFeeRange: budgetFormData.expectedTuitionFeeRange || "",
+        },
+      };
+
+      // Log what we're sending
+      console.log("Saving preferences with structure:", {
+        personal_info_fields: Object.keys(dataToSave.personal_info),
+        academic_preferences_fields: Object.keys(dataToSave.academic_preferences),
+        goals_fields: Object.keys(dataToSave.goals),
+        budget_fields: Object.keys(dataToSave.budget),
+      });
+
+      const response = await fetch("/api/preferences", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(dataToSave),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to save preferences");
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Log saved data for verification (including dates)
+        console.log("Preferences saved successfully:", {
+          academic_preferences: result.data?.academic_preferences,
+          dateFields: {
+            satDate: result.data?.academic_preferences?.satDate,
+            actDate: result.data?.academic_preferences?.actDate,
+            apDate: result.data?.academic_preferences?.apDate,
+            psatDate: result.data?.academic_preferences?.psatDate,
+            toeflIeltsDate: result.data?.academic_preferences?.toeflIeltsDate,
+          }
+        });
+        setSaveMessage({ type: "success", text: "Preferences saved successfully! Redirecting..." });
+        
+        // Navigate to admit after successful save (2 second delay to show success message)
+        setTimeout(() => {
+          router.push("/admit");
+        }, 2000);
+      } else {
+        throw new Error(result.error || "Failed to save preferences");
+      }
+    } catch (error: any) {
+      console.error("Error saving preferences:", error);
+      setSaveMessage({ type: "error", text: error.message || "Failed to save preferences. Please try again." });
+      // Clear error message after 5 seconds
+      setTimeout(() => setSaveMessage(null), 5000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoadingData) {
+    return (
+      <div className="min-h-screen relative flex flex-col bg-white">
+        <header className="w-full px-6 py-4 flex justify-between items-center relative z-10">
+          <UniiqLogo href="/" size="lg" />
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <span className="text-sm">Skip, Back to Dashboard</span>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="mt-4 text-gray-600">Loading preferences...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen relative flex flex-col bg-white">
       {/* Header */}
@@ -134,6 +369,18 @@ export default function PreferencesPage() {
               Find ways to improve your academics, track your scores and access
               tutoring resources.
             </p>
+            {/* Save Message */}
+            {saveMessage && (
+              <div
+                className={`mt-4 p-3 rounded-md text-sm ${
+                  saveMessage.type === "success"
+                    ? "bg-green-50 text-green-800 border border-green-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                {saveMessage.text}
+              </div>
+            )}
           </div>
 
           {/* Sections */}
@@ -523,9 +770,8 @@ export default function PreferencesPage() {
                               Date
                             </label>
                             <input
-                              type="text"
+                              type="date"
                               name="satDate"
-                              placeholder="dd/mm/yyyy"
                               value={academicFormData.satDate}
                               onChange={handleAcademicInputChange}
                               className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -553,9 +799,8 @@ export default function PreferencesPage() {
                               Date
                             </label>
                             <input
-                              type="text"
+                              type="date"
                               name="actDate"
-                              placeholder="dd/mm/yyyy"
                               value={academicFormData.actDate}
                               onChange={handleAcademicInputChange}
                               className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -596,9 +841,8 @@ export default function PreferencesPage() {
                               Date
                             </label>
                             <input
-                              type="text"
+                              type="date"
                               name="apDate"
-                              placeholder="dd/mm/yyyy"
                               value={academicFormData.apDate}
                               onChange={handleAcademicInputChange}
                               className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -626,9 +870,8 @@ export default function PreferencesPage() {
                               Date
                             </label>
                             <input
-                              type="text"
+                              type="date"
                               name="psatDate"
-                              placeholder="dd/mm/yyyy"
                               value={academicFormData.psatDate}
                               onChange={handleAcademicInputChange}
                               className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -656,9 +899,8 @@ export default function PreferencesPage() {
                               Date
                             </label>
                             <input
-                              type="text"
+                              type="date"
                               name="toeflIeltsDate"
-                              placeholder="dd/mm/yyyy"
                               value={academicFormData.toeflIeltsDate}
                               onChange={handleAcademicInputChange}
                               className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1127,22 +1369,26 @@ export default function PreferencesPage() {
                     </button>
                     <button
                       type="button"
-                      className="px-6 py-2.5 bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900 transition-colors flex items-center gap-2"
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      className="px-6 py-2.5 bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Save
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                      {isLoading ? "Saving..." : "Save"}
+                      {!isLoading && (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </div>
