@@ -19,8 +19,15 @@ export async function GET(request: NextRequest) {
       return ApiResponse.error("API key not configured", 500);
     }
 
-    // Search for the school by name - including athletics and facilities data
-    const searchUrl = `${BASE_URL}?api_key=${COLLEGE_SCORECARD_API_KEY}&school.name=${encodeURIComponent(schoolName)}&fields=id,school.name,school.state,school.city,school.zip,school.region_id,school.locale,school.carnegie_basic,school.carnegie_size_setting,school.degrees_awarded.predominant,school.ownership,school.online_only,school.operating,school.athletic_association,school.athletic_division,latest.admissions.admission_rate.overall,latest.admissions.sat_scores.average.overall,latest.admissions.act_scores.midpoint.cumulative,latest.student.size,latest.cost.tuition.in_state,latest.cost.tuition.out_of_state,latest.aid.median_debt.completers.overall,latest.completion.completion_rate_4yr_150nt,latest.earnings.10_yrs_after_entry.median,location.lat,location.lon`;
+    // Search for the school by name - including athletics, facilities, and programs data
+    // Use all_programs_nested=true to get all programs as an array
+    const params = new URLSearchParams({
+      'api_key': COLLEGE_SCORECARD_API_KEY,
+      'school.name': schoolName,
+      'fields': 'id,school.name,school.state,school.city,school.zip,school.region_id,school.locale,school.carnegie_basic,school.carnegie_size_setting,school.degrees_awarded.predominant,school.ownership,school.online_only,school.operating,school.athletic_association,school.athletic_division,latest.admissions.admission_rate.overall,latest.admissions.sat_scores.average.overall,latest.admissions.act_scores.midpoint.cumulative,latest.student.size,latest.cost.tuition.in_state,latest.cost.tuition.out_of_state,latest.aid.median_debt.completers.overall,latest.completion.completion_rate_4yr_150nt,latest.earnings.10_yrs_after_entry.median,location.lat,location.lon,latest.programs.cip_4_digit',
+      'all_programs_nested': 'true'
+    });
+    const searchUrl = `${BASE_URL}?${params.toString()}`;
 
     const response = await fetch(searchUrl);
 
@@ -61,6 +68,46 @@ export async function GET(request: NextRequest) {
       ? Math.round((1 - (college["latest.aid.median_debt.completers.overall"] / (college["latest.cost.tuition.out_of_state"] || college["latest.cost.tuition.in_state"] || 1))) * 100)
       : null;
 
+    // Extract program titles from API response
+    // With all_programs_nested=true, latest.programs.cip_4_digit returns an array of program objects
+    const programsData = college["latest.programs.cip_4_digit"];
+    const majors: string[] = [];
+    
+    // Handle the array of program objects
+    if (Array.isArray(programsData)) {
+      programsData.forEach((program: any) => {
+        // Each program object has: code, title, credential, earnings, etc.
+        if (program && program.title && typeof program.title === 'string') {
+          const programTitle = program.title.trim();
+          // Only add unique program titles
+          if (programTitle && !majors.includes(programTitle)) {
+            majors.push(programTitle);
+          }
+        }
+      });
+    } else if (programsData && typeof programsData === 'object') {
+      // Fallback: if it's an object instead of array, try to extract titles
+      Object.values(programsData).forEach((program: any) => {
+        if (program && typeof program === 'object' && program.title) {
+          const programTitle = program.title.trim();
+          if (programTitle && !majors.includes(programTitle)) {
+            majors.push(programTitle);
+          }
+        } else if (program && typeof program === 'string') {
+          const programTitle = program.trim();
+          if (programTitle && !majors.includes(programTitle)) {
+            majors.push(programTitle);
+          }
+        }
+      });
+    }
+    
+    // Sort majors alphabetically for better display
+    majors.sort();
+    
+    // Return only the majors found in the API - no hardcoded fallback
+    const finalMajors = majors;
+
     // Format the data for our use
     const formattedData = {
       id: college.id,
@@ -91,6 +138,7 @@ export async function GET(request: NextRequest) {
       aidPercentage: aidPercentage,
       athleticAssociation: college["school.athletic_association"] || null, // NCAA, NAIA, etc.
       athleticDivision: college["school.athletic_division"] || null, // Division I, II, III, etc.
+      majors: finalMajors, // List of majors/programs offered
     };
 
     return ApiResponse.success(formattedData);

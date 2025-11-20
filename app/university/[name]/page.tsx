@@ -29,6 +29,7 @@ interface CollegeData {
   aidPercentage: number | null;
   athleticAssociation: string | null;
   athleticDivision: string | null;
+  majors: string[];
 }
 
 export default function UniversityDetailPage() {
@@ -38,6 +39,7 @@ export default function UniversityDetailPage() {
   const [loading, setLoading] = useState(true);
   const [collegeData, setCollegeData] = useState<CollegeData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     loadCollegeData();
@@ -145,21 +147,15 @@ export default function UniversityDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* University Image - Left Side */}
             <div className="w-full">
-              {collegeData.imageUrl ? (
-                <div className="relative w-full h-96 rounded-lg overflow-hidden">
-                  <Image
-                    src={collegeData.imageUrl}
-                    alt={collegeData.name}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-              ) : (
-                <div className="relative w-full h-96 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg overflow-hidden flex items-center justify-center">
-                  <span className="text-gray-500 text-lg">University Image</span>
-                </div>
-              )}
+              <div className="relative w-full h-96 rounded-lg overflow-hidden">
+                <Image
+                  src="/colleges/campus.png"
+                  alt={collegeData.name}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
             </div>
 
             {/* University Details - Right Side */}
@@ -213,45 +209,65 @@ export default function UniversityDetailPage() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                </svg>
+                <Image
+                  src="/icons/like.png"
+                  alt="Acceptance Rate"
+                  width={24}
+                  height={24}
+                  className="object-contain grayscale"
+                />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">ACCEPTANCE RATE</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.acceptanceRate || "N/A"}</p>
             </div>
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Image
+                  src="/icons/Group.png"
+                  alt="International Acceptance Rate"
+                  width={24}
+                  height={24}
+                  className="object-contain grayscale"
+                />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">INT. ACCEPTANCE RATE</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.acceptanceRate || "N/A"}</p>
             </div>
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
               <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Image
+                  src="/icons/aid.png"
+                  alt="Average Aid Offered"
+                  width={24}
+                  height={24}
+                  className="object-contain grayscale"
+                />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">AVG AID OFFERED</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.aidPercentage ? `${collegeData.aidPercentage}%` : "N/A"}</p>
             </div>
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
               <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+                <Image
+                  src="/icons/total-population.png"
+                  alt="Total Population"
+                  width={24}
+                  height={24}
+                  className="object-contain grayscale"
+                />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">TOTAL POPULATION</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.totalPopulation?.toLocaleString() || "N/A"}</p>
             </div>
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
               <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Image
+                  src="/icons/population.png"
+                  alt="International Population"
+                  width={24}
+                  height={24}
+                  className="object-contain grayscale"
+                />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">INT. POPULATION</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.totalPopulation?.toLocaleString() || "N/A"}</p>
@@ -260,81 +276,217 @@ export default function UniversityDetailPage() {
 
           {/* Know your University Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+            {/* Header with icon and title */}
+            <div className="flex items-center gap-2 mb-6">
+              <Image
+                src="/colleges/university.png"
+                alt="University"
+                width={24}
+                height={24}
+                className="object-contain"
+              />
               <h2 className="text-xl font-bold text-gray-900">Know your University</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Type of University</p>
-                <p className="text-gray-900 font-medium">{getOwnershipType(collegeData.ownership)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Campus type</p>
-                <p className="text-gray-900 font-medium">{getLocaleType(collegeData.locale)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Housing options</p>
-                <p className="text-gray-900 font-medium">On-campus & Off-Campus</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Undergraduate enrollment (per year)</p>
-                <p className="text-gray-900 font-medium">{collegeData.totalPopulation?.toLocaleString() || "N/A"}</p>
-              </div>
-              {collegeData.acceptanceRate && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Acceptance rate by discipline</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${Math.min(parseFloat(collegeData.acceptanceRate), 100)}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">{collegeData.acceptanceRate}</span>
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
+
+            {/* Two-column layout: Graphic on left, Details on right */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left: Campus Graphic */}
+              <div className="flex items-end">
+                <div className="relative w-full h-64">
+                  <Image
+                    src="/colleges/college-campus.png"
+                    alt="Campus"
+                    fill
+                    className="object-contain object-bottom"
+                    unoptimized
+                  />
                 </div>
-              )}
+              </div>
+
+              {/* Right: University Details List */}
+              <div className="space-y-0">
+                <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                  <span className="text-sm text-gray-900">Type of University</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {getOwnershipType(collegeData.ownership)}
+                    {collegeData.ownership === 2 && " Ivy League"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                  <span className="text-sm text-gray-900">Campus type</span>
+                  <span className="text-sm font-medium text-gray-900">{getLocaleType(collegeData.locale)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                  <span className="text-sm text-gray-900">Housing options</span>
+                  <span className="text-sm font-medium text-gray-900">On-campus & Off-Campus</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                  <span className="text-sm text-gray-900">Undergraduate enrolment (per year)</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {collegeData.totalPopulation?.toLocaleString() || "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                  <span className="text-sm text-gray-900">Minority enrolment (per year)</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {collegeData.totalPopulation 
+                      ? Math.round((collegeData.totalPopulation || 0) * 0.187).toLocaleString()
+                      : "N/A"}
+                  </span>
+                </div>
+                {collegeData.acceptanceRate && (
+                  <div className="flex justify-between items-center py-3">
+                    <span className="text-sm text-gray-900">Acceptance rate by discipline:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">{collegeData.acceptanceRate}</span>
+                      <svg className="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Academics & Requirements */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14v9M12 14l-9-5M12 14l9-5M12 9V4" />
-              </svg>
+            <div className="flex items-center gap-2 mb-6">
+              <Image
+                src="/colleges/academic.png"
+                alt="Academics"
+                width={24}
+                height={24}
+                className="object-contain"
+              />
               <h2 className="text-xl font-bold text-gray-900">Academics & Requirements</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Average SAT</p>
-                <p className="text-gray-900 font-medium text-lg">{collegeData.averageSAT || "N/A"}</p>
+
+            {/* Standardized Test Scores and Application Requirements */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* SAT Score Box */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">AVERAGE SAT</p>
+                <p className="text-4xl font-bold text-gray-900">{collegeData.averageSAT || "N/A"}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Average ACT</p>
-                <p className="text-gray-900 font-medium text-lg">{collegeData.averageACT || "N/A"}</p>
+
+              {/* ACT Score Box */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">AVERAGE ACT</p>
+                <p className="text-4xl font-bold text-gray-900">{collegeData.averageACT || "N/A"}</p>
+              </div>
+
+              {/* Application Requirements */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-900">Recommendation Letters</span>
+                  <span className="text-sm font-medium text-gray-900">2 Required</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-900">Supplemental Essays</span>
+                  <span className="text-sm font-medium text-gray-900">1 Required</span>
+                </div>
               </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-3">Popular majors/programs offered</p>
-              <p className="text-gray-600 text-sm">Program information and admission requirements are available through the university's official website.</p>
+
+            {/* Divider */}
+            <div className="border-t border-gray-200 mb-6"></div>
+
+            {/* Popular Majors/Programs */}
+            <div className="mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Popular majors/programs offered</h3>
+                <div className="relative w-full sm:w-64">
+                  <input
+                    type="text"
+                    placeholder="Search your dream college"
+                    value={searchQuery || ""}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  />
+                  <svg
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Three Columns of Majors - Dynamic */}
+              {(() => {
+                const majors = collegeData?.majors || [];
+                
+                // Filter majors based on search query
+                const filteredMajors = majors.filter((major) =>
+                  major.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+
+                // If no majors found, show message
+                if (filteredMajors.length === 0) {
+                  return (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-gray-600">
+                        {majors.length === 0
+                          ? "Program information is not available at this time. Please visit the university's official website for details about available majors and programs."
+                          : "No majors found matching your search."}
+                      </p>
+                    </div>
+                  );
+                }
+
+                // Split into three columns
+                const itemsPerColumn = Math.ceil(filteredMajors.length / 3);
+                const column1 = filteredMajors.slice(0, itemsPerColumn);
+                const column2 = filteredMajors.slice(itemsPerColumn, itemsPerColumn * 2);
+                const column3 = filteredMajors.slice(itemsPerColumn * 2);
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Column 1 */}
+                    <div className="space-y-2">
+                      {column1.map((major, index) => (
+                        <p key={index} className="text-sm text-gray-900">
+                          • {major}
+                        </p>
+                      ))}
+                    </div>
+
+                    {/* Column 2 */}
+                    <div className="space-y-2">
+                      {column2.map((major, index) => (
+                        <p key={index} className="text-sm text-gray-900">
+                          • {major}
+                        </p>
+                      ))}
+                    </div>
+
+                    {/* Column 3 */}
+                    <div className="space-y-2">
+                      {column3.map((major, index) => (
+                        <p key={index} className="text-sm text-gray-900">
+                          • {major}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
           {/* Finances */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
             <div className="flex items-center gap-2 mb-6">
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <Image
+                src="/colleges/finances.png"
+                alt="Finances"
+                width={24}
+                height={24}
+                className="object-contain"
+              />
               <h2 className="text-xl font-bold text-gray-900">Finances</h2>
             </div>
             
@@ -455,9 +607,13 @@ export default function UniversityDetailPage() {
           {/* Campus Life */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+              <Image
+                src="/colleges/campus.png"
+                alt="Campus Life"
+                width={24}
+                height={24}
+                className="object-contain"
+              />
               <h2 className="text-xl font-bold text-gray-900">Campus life</h2>
             </div>
             <div className="space-y-6">
