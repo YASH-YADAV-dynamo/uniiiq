@@ -147,14 +147,25 @@ export default function UniversityDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* University Image - Left Side */}
             <div className="w-full">
-              <div className="relative w-full h-96 rounded-lg overflow-hidden">
-                <Image
-                  src="/colleges/campus.png"
-                  alt={collegeData.name}
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
+              <div className={`relative w-full rounded-lg overflow-hidden ${collegeData.imageUrl ? 'h-96' : 'h-64 flex items-center justify-center'}`}>
+                {collegeData.imageUrl ? (
+                  <Image
+                    src={collegeData.imageUrl}
+                    alt={collegeData.name}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <Image
+                    src="/colleges/college-campus.png"
+                    alt={collegeData.name}
+                    width={400}
+                    height={256}
+                    className="object-contain"
+                    unoptimized
+                  />
+                )}
               </div>
             </div>
 
@@ -183,11 +194,11 @@ export default function UniversityDetailPage() {
                     </div>
                   </div>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 ml-4">
-                  <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                <button className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 ml-4">
+                  <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                   </svg>
-                  <span>Shortlist</span>
+                  <span className="text-sm text-black font-medium">Shortlist</span>
                 </button>
               </div>
 
@@ -207,66 +218,66 @@ export default function UniversityDetailPage() {
 
           {/* Key Statistics - Horizontal Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="bg-white rounded-lg p-6 text-center">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Image
                   src="/icons/like.png"
                   alt="Acceptance Rate"
                   width={24}
                   height={24}
-                  className="object-contain grayscale"
+                  className="object-contain grayscale brightness-0"
                 />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">ACCEPTANCE RATE</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.acceptanceRate || "N/A"}</p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="bg-white rounded-lg p-6 text-center">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Image
                   src="/icons/Group.png"
                   alt="International Acceptance Rate"
                   width={24}
                   height={24}
-                  className="object-contain grayscale"
+                  className="object-contain grayscale brightness-0"
                 />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">INT. ACCEPTANCE RATE</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.acceptanceRate || "N/A"}</p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="bg-white rounded-lg p-6 text-center">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Image
                   src="/icons/aid.png"
                   alt="Average Aid Offered"
                   width={24}
                   height={24}
-                  className="object-contain grayscale"
+                  className="object-contain grayscale brightness-0"
                 />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">AVG AID OFFERED</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.aidPercentage ? `${collegeData.aidPercentage}%` : "N/A"}</p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="bg-white rounded-lg p-6 text-center">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Image
                   src="/icons/total-population.png"
                   alt="Total Population"
                   width={24}
                   height={24}
-                  className="object-contain grayscale"
+                  className="object-contain grayscale brightness-0"
                 />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">TOTAL POPULATION</p>
               <p className="text-2xl font-bold text-gray-900">{collegeData.totalPopulation?.toLocaleString() || "N/A"}</p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="bg-white rounded-lg p-6 text-center">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Image
                   src="/icons/population.png"
                   alt="International Population"
                   width={24}
                   height={24}
-                  className="object-contain grayscale"
+                  className="object-contain grayscale brightness-0"
                 />
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-medium">INT. POPULATION</p>
