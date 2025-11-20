@@ -39,7 +39,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    const body = await request.json();
+    
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError: any) {
+      console.error("JSON parse error:", jsonError);
+      return ApiResponse.error("Invalid JSON in request body", 400);
+    }
+    
     const { personal_info, academic_preferences, goals, budget } = body;
 
     // Log the received data structure for verification
@@ -49,12 +57,49 @@ export async function POST(request: NextRequest) {
     console.log("Goals fields:", goals ? Object.keys(goals) : "null");
     console.log("Budget fields:", budget ? Object.keys(budget) : "null");
 
-    // Check if preferences exist
-    const { data: existing } = await supabaseAdmin
+    // Ensure user exists in users table (required for foreign key constraint)
+    const { data: existingUser, error: userCheckError } = await supabaseAdmin
+      .from("users")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (userCheckError) {
+      console.error("User check error:", userCheckError);
+      return ApiResponse.error(`Failed to verify user: ${userCheckError.message}`, 400);
+    }
+
+    // If user doesn't exist, create it
+    if (!existingUser) {
+      console.log("User not found in users table, creating profile...");
+      const { error: createUserError } = await supabaseAdmin
+        .from("users")
+        .insert({
+          id: user.id,
+          email: user.email || "",
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+          profile_picture_url: user.user_metadata?.avatar_url || null,
+          subscribe_newsletter: false,
+        } as any);
+
+      if (createUserError) {
+        console.error("Failed to create user profile:", createUserError);
+        return ApiResponse.error(`Failed to create user profile: ${createUserError.message}`, 400);
+      }
+      console.log("User profile created successfully");
+    }
+
+    // Check if preferences exist - use maybeSingle to avoid error when no record exists
+    const { data: existing, error: checkError } = await supabaseAdmin
       .from("user_preferences")
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
+
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("Check preferences error:", checkError);
+      return ApiResponse.error(checkError.message, 400);
+    }
 
     if (existing) {
       // Update existing

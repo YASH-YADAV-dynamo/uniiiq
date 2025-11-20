@@ -1,9 +1,9 @@
 import { supabase } from "./client";
+import { getAppUrl } from "@/lib/utils/app-url";
 
 export async function signInWithGoogle() {
   // Use environment variable if available, otherwise use current origin
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-    (typeof window !== "undefined" ? window.location.origin : "");
+  const baseUrl = getAppUrl();
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

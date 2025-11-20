@@ -71,7 +71,8 @@ export default function SignInPage() {
         // Continue with signin even if profile update fails
       }
 
-      router.push("/preferences");
+      // Use window.location for a hard redirect to ensure it works on Vercel
+      window.location.href = "/preferences";
     } catch (err: any) {
       setError(err.message || "An error occurred. Please try again.");
     } finally {

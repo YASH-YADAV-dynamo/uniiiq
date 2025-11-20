@@ -175,8 +175,8 @@ export default function SignUpPage() {
       // Store session token if available
       if (session?.access_token) {
         localStorage.setItem("supabase_token", session.access_token);
-        // Redirect to dashboard on success
-        router.push("/dashboard");
+        // Redirect to preferences to complete onboarding flow - use hard redirect
+        window.location.href = "/preferences";
       } else {
         // If no session (shouldn't happen with admin API, but handle it)
         setError("Account created! Please sign in to continue.");
