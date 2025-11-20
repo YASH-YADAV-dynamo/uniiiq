@@ -21,6 +21,8 @@ export default function AdmitPage() {
   const [gpaScore, setGpaScore] = useState("");
   const [currentGrade, setCurrentGrade] = useState("");
   const [extracurricularHours, setExtracurricularHours] = useState(10);
+  const [satError, setSatError] = useState("");
+  const [gpaError, setGpaError] = useState("");
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [activityInput, setActivityInput] = useState("");
   const [activities, setActivities] = useState<Array<{
@@ -71,13 +73,54 @@ export default function AdmitPage() {
   ];
 
   const handleNext = async () => {
+    // Validation for each step
     if (currentStep === 1 && selectedMajor) {
       setCurrentStep(2);
     } else if (currentStep === 2 && selectedUniversities.length > 0) {
       setCurrentStep(3);
     } else if (currentStep === 3) {
+      // Validate SAT score
+      if (satScore === "") {
+        alert("Please enter your SAT score");
+        return;
+      }
+      const satNum = parseInt(satScore);
+      if (isNaN(satNum) || satNum < 400 || satNum > 1600) {
+        alert("SAT score must be between 400 and 1600");
+        return;
+      }
+      if (satError) {
+        alert("Please fix the SAT score error before proceeding");
+        return;
+      }
       setCurrentStep(4);
     } else if (currentStep === 4) {
+      // Validate GPA
+      if (!gpaScale) {
+        alert("Please select a GPA scale");
+        return;
+      }
+      if (gpaScore === "") {
+        alert("Please enter your GPA score");
+        return;
+      }
+      const gpaNum = parseFloat(gpaScore);
+      if (isNaN(gpaNum)) {
+        alert("Please enter a valid GPA number");
+        return;
+      }
+      if (gpaScale === "4.0" && (gpaNum < 0 || gpaNum > 4.0)) {
+        alert("GPA must be between 0.0 and 4.0 for 4.0 scale");
+        return;
+      }
+      if (gpaScale === "100" && (gpaNum < 0 || gpaNum > 100)) {
+        alert("GPA must be between 0 and 100 for 100 scale");
+        return;
+      }
+      if (gpaError) {
+        alert("Please fix the GPA error before proceeding");
+        return;
+      }
       setCurrentStep(5);
     } else if (currentStep === 5) {
       setCurrentStep(6);
@@ -357,15 +400,50 @@ export default function AdmitPage() {
           {currentStep === 3 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-black">What's your SAT score?</h2>
-              <input
-                type="number"
-                value={satScore}
-                onChange={(e) => setSatScore(e.target.value)}
-                placeholder="Enter your SAT score (400-1600)"
-                min="400"
-                max="1600"
-                className="w-full p-3 border border-gray-300 rounded-lg text-black"
-              />
+              <div>
+                <input
+                  type="number"
+                  value={satScore}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSatScore(value);
+                    // Validate SAT score (400-1600)
+                    if (value === "") {
+                      setSatError("");
+                    } else {
+                      const numValue = parseInt(value);
+                      if (isNaN(numValue) || numValue < 400 || numValue > 1600) {
+                        setSatError("SAT score must be between 400 and 1600");
+                      } else {
+                        setSatError("");
+                      }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value;
+                    if (value !== "") {
+                      const numValue = parseInt(value);
+                      if (numValue < 400) {
+                        setSatScore("400");
+                        setSatError("");
+                      } else if (numValue > 1600) {
+                        setSatScore("1600");
+                        setSatError("");
+                      }
+                    }
+                  }}
+                  placeholder="Enter your SAT score (400-1600)"
+                  min="400"
+                  max="1600"
+                  className={`w-full p-3 border rounded-lg text-black ${
+                    satError ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {satError && (
+                  <p className="mt-2 text-sm text-red-600">{satError}</p>
+                )}
+                <p className="mt-2 text-xs text-gray-500">Valid range: 400 - 1600</p>
+              </div>
             </div>
           )}
 
@@ -378,7 +456,11 @@ export default function AdmitPage() {
                   <label className="block text-sm font-medium text-black mb-2">GPA Scale</label>
                   <select
                     value={gpaScale}
-                    onChange={(e) => setGpaScale(e.target.value)}
+                    onChange={(e) => {
+                      setGpaScale(e.target.value);
+                      setGpaScore(""); // Clear GPA score when scale changes
+                      setGpaError(""); // Clear error
+                    }}
                     className="w-full p-3 border border-gray-300 rounded-lg text-black"
                   >
                     <option value="">Select scale</option>
@@ -390,12 +472,93 @@ export default function AdmitPage() {
                 <div>
                   <label className="block text-sm font-medium text-black mb-2">GPA Score</label>
                   <input
-                    type="text"
+                    type="number"
+                    step={gpaScale === "4.0" ? "0.01" : "0.1"}
                     value={gpaScore}
-                    onChange={(e) => setGpaScore(e.target.value)}
-                    placeholder="Enter your GPA"
-                    className="w-full p-3 border border-gray-300 rounded-lg text-black"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setGpaScore(value);
+                      
+                      // Validate GPA based on selected scale
+                      if (value === "") {
+                        setGpaError("");
+                      } else if (!gpaScale) {
+                        setGpaError("Please select a GPA scale first");
+                      } else {
+                        const numValue = parseFloat(value);
+                        if (isNaN(numValue)) {
+                          setGpaError("Please enter a valid number");
+                        } else if (gpaScale === "4.0") {
+                          if (numValue < 0 || numValue > 4.0) {
+                            setGpaError("GPA must be between 0.0 and 4.0 for 4.0 scale");
+                          } else {
+                            setGpaError("");
+                          }
+                        } else if (gpaScale === "100") {
+                          if (numValue < 0 || numValue > 100) {
+                            setGpaError("GPA must be between 0 and 100 for 100 scale");
+                          } else {
+                            setGpaError("");
+                          }
+                        } else if (gpaScale === "Other") {
+                          // For "Other" scale, allow any positive number but warn
+                          if (numValue < 0) {
+                            setGpaError("GPA cannot be negative");
+                          } else {
+                            setGpaError("");
+                          }
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      if (value !== "" && gpaScale) {
+                        const numValue = parseFloat(value);
+                        if (!isNaN(numValue)) {
+                          if (gpaScale === "4.0") {
+                            if (numValue < 0) {
+                              setGpaScore("0");
+                              setGpaError("");
+                            } else if (numValue > 4.0) {
+                              setGpaScore("4.0");
+                              setGpaError("");
+                            }
+                          } else if (gpaScale === "100") {
+                            if (numValue < 0) {
+                              setGpaScore("0");
+                              setGpaError("");
+                            } else if (numValue > 100) {
+                              setGpaScore("100");
+                              setGpaError("");
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    placeholder={
+                      gpaScale === "4.0" 
+                        ? "Enter GPA (0.0 - 4.0)" 
+                        : gpaScale === "100" 
+                        ? "Enter GPA (0 - 100)" 
+                        : "Enter your GPA"
+                    }
+                    disabled={!gpaScale}
+                    className={`w-full p-3 border rounded-lg text-black ${
+                      gpaError ? "border-red-500" : "border-gray-300"
+                    } ${!gpaScale ? "bg-gray-100 cursor-not-allowed" : ""}`}
                   />
+                  {gpaError && (
+                    <p className="mt-2 text-sm text-red-600">{gpaError}</p>
+                  )}
+                  {gpaScale && !gpaError && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      {gpaScale === "4.0" 
+                        ? "Valid range: 0.0 - 4.0" 
+                        : gpaScale === "100" 
+                        ? "Valid range: 0 - 100" 
+                        : "Enter your GPA value"}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -489,10 +652,30 @@ export default function AdmitPage() {
                     className="w-full p-3 border border-gray-300 rounded-lg text-black"
                   />
                   <input
-                    type="text"
-                    placeholder="Hours per week"
+                    type="number"
+                    min="0"
+                    max="168"
+                    step="0.5"
+                    placeholder="Hours per week (0-168)"
                     value={currentActivity.hoursPerWeek}
-                    onChange={(e) => setCurrentActivity({ ...currentActivity, hoursPerWeek: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Validate hours (0-168, max hours in a week)
+                      if (value === "" || (parseFloat(value) >= 0 && parseFloat(value) <= 168)) {
+                        setCurrentActivity({ ...currentActivity, hoursPerWeek: value });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      if (value !== "") {
+                        const numValue = parseFloat(value);
+                        if (numValue < 0) {
+                          setCurrentActivity({ ...currentActivity, hoursPerWeek: "0" });
+                        } else if (numValue > 168) {
+                          setCurrentActivity({ ...currentActivity, hoursPerWeek: "168" });
+                        }
+                      }
+                    }}
                     className="w-full p-3 border border-gray-300 rounded-lg text-black"
                   />
                   <button

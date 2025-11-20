@@ -41,6 +41,11 @@ export default function AdmitScorePage() {
   const [comparisonMetrics, setComparisonMetrics] = useState<ComparisonMetric[]>([]);
   const [strengths, setStrengths] = useState<string[]>([]);
   const [improvements, setImprovements] = useState<string[]>([]);
+  const [topUniversities, setTopUniversities] = useState<Array<{
+    name: string;
+    match: number;
+    logo: string;
+  }>>([]);
 
   useEffect(() => {
     loadData();
@@ -58,17 +63,13 @@ export default function AdmitScorePage() {
         if (current >= score) {
           setScoreAnimated(score);
           clearInterval(timer);
-          // Auto-redirect to dashboard after score animation completes (5 seconds delay)
-          setTimeout(() => {
-            router.push("/dashboard");
-          }, 5000);
         } else {
           setScoreAnimated(Math.floor(current));
         }
       }, duration / steps);
       return () => clearInterval(timer);
     }
-  }, [score, router]);
+  }, [score]);
 
   const loadData = async () => {
     try {
@@ -140,6 +141,63 @@ export default function AdmitScorePage() {
         
         const improvementsList = calculateImprovements(userData, metrics);
         setImprovements(improvementsList);
+
+        // Fetch college recommendations using AHP logic
+        try {
+          const recommendationsResponse = await fetch("/api/colleges/recommendations", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              sat_score: userData.satScore,
+              gpa_score: userData.gpaScore,
+              gpa_scale: userData.gpaScale,
+              major: userData.major,
+              universities: userData.universities,
+              extracurricular_hours: userData.extracurricularHours,
+              activities: userData.activities,
+              detailed_activities: userData.detailedActivities,
+            }),
+          });
+
+          if (recommendationsResponse.ok) {
+            const recommendationsResult = await recommendationsResponse.json();
+            if (recommendationsResult.success && recommendationsResult.data?.recommendations) {
+              const recommendations = recommendationsResult.data.recommendations.map((rec: any) => ({
+                name: rec.name,
+                match: rec.match,
+                logo: `/university-${rec.name.toLowerCase().replace(/\s+/g, '-')}.png`,
+              }));
+              setTopUniversities(recommendations);
+            }
+          }
+        } catch (recError) {
+          console.error("Error fetching recommendations:", recError);
+          // Fallback to old calculation method
+          const allUniversities = [
+            ...userData.universities,
+            "Harvard University",
+            "MIT",
+            "Yale University",
+            "Brown University",
+            "Stanford University",
+            "Princeton University",
+            "Columbia University",
+            "Duke University"
+          ];
+          const uniqueUniversities = Array.from(new Set(allUniversities));
+          const universitiesWithMatches = uniqueUniversities
+            .map(uni => ({
+              name: uni,
+              match: calculateUniversityMatch(uni, userData, calculatedScore),
+              logo: `/university-${uni.toLowerCase().replace(/\s+/g, '-')}.png`,
+            }))
+            .sort((a, b) => b.match - a.match)
+            .slice(0, 4);
+          setTopUniversities(universitiesWithMatches);
+        }
       }
     } catch (error) {
       console.error("Error loading data:", error);
@@ -355,11 +413,31 @@ export default function AdmitScorePage() {
     );
   }
 
-  const topUniversities = data.universities.slice(0, 4).map(uni => ({
-    name: uni,
-    match: 84,
-    logo: "/university-placeholder.png",
-  }));
+  // Fallback calculation method (used if API fails)
+  const calculateUniversityMatch = (universityName: string, userData: SmartAdmitData, userScore: number): number => {
+    // Base match on overall score
+    let match = userScore;
+    
+    // Create a deterministic hash from university name for consistent variation
+    const hash = universityName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    
+    // Adjust based on university tier (top universities need higher scores)
+    const topTier = ["Harvard", "MIT", "Stanford", "Yale", "Princeton", "Columbia", "Brown"];
+    const midTier = ["Duke", "Northwestern", "Johns Hopkins", "Vanderbilt", "Rice"];
+    
+    if (topTier.some(tier => universityName.includes(tier))) {
+      // Top tier: reduce match by 8-12 points (harder to get into)
+      match = Math.max(70, match - 10 + (hash % 5));
+    } else if (midTier.some(tier => universityName.includes(tier))) {
+      // Mid tier: slight reduction
+      match = Math.max(75, match - 3 + (hash % 3));
+    } else {
+      // Other universities: slight boost
+      match = Math.min(95, match + 2 + (hash % 3));
+    }
+    
+    return Math.round(match);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -393,8 +471,8 @@ export default function AdmitScorePage() {
               />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">YOUR SMART ADMIT SCORE</h1>
-          <p className="text-gray-600 mb-2">Better than {Math.round((score / 100) * 40)}% students.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">YOUR SMART-ADMIT SCORE</h1>
+          <p className="text-gray-600 mb-2">Better than {Math.round((score / 100) * 60)}% students.</p>
           <p className="text-sm text-gray-500 mb-2">
             Based on your academics, test scores, activities, and preferred course/university -
           </p>
@@ -414,18 +492,21 @@ export default function AdmitScorePage() {
             {topUniversities.map((uni, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => router.push(`/university/${encodeURIComponent(uni.name)}`)}
+                className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer flex items-center justify-between"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-bold text-gray-600">{uni.name.charAt(0)}</span>
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="text-xs font-bold text-gray-600">{uni.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</span>
                   </div>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 mb-1 text-sm truncate">{uni.name}</h3>
+                    <p className="text-sm font-medium text-gray-700">{uni.match}% match</p>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{uni.name}</h3>
-                <p className="text-sm text-gray-600">{uni.match}%</p>
+                <svg className="w-5 h-5 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             ))}
           </div>

@@ -25,6 +25,7 @@ export default function PreferencesPage() {
     subjectsTaken: "",
     gradeSubject: "",
     gradeScore: "",
+    marksheetUrl: "",
     awards: "",
     satScore: "",
     satDate: "",
@@ -38,6 +39,9 @@ export default function PreferencesPage() {
     toeflIeltsScore: "",
     toeflIeltsDate: "",
   });
+  const [marksheetFile, setMarksheetFile] = useState<File | null>(null);
+  const [isUploadingMarksheet, setIsUploadingMarksheet] = useState(false);
+  const [marksheetUploadError, setMarksheetUploadError] = useState("");
   const [goalsFormData, setGoalsFormData] = useState({
     hoursPerWeek: 2.5,
     goalsDefined: "",
@@ -96,6 +100,85 @@ export default function PreferencesPage() {
     setBudgetFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleMarksheetFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/jpg",
+        "image/webp",
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        setMarksheetUploadError("File must be a PDF or image (PNG, JPEG, JPG, WEBP)");
+        return;
+      }
+
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        setMarksheetUploadError("File size must be less than 10MB");
+        return;
+      }
+
+      setMarksheetFile(file);
+      setMarksheetUploadError("");
+    }
+  };
+
+  const handleMarksheetUpload = async () => {
+    if (!marksheetFile) {
+      setMarksheetUploadError("Please select a file first");
+      return;
+    }
+
+    setIsUploadingMarksheet(true);
+    setMarksheetUploadError("");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
+      const formData = new FormData();
+      formData.append("file", marksheetFile);
+
+      const response = await fetch("/api/upload/marksheet", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to upload marksheet");
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setAcademicFormData((prev) => ({
+          ...prev,
+          marksheetUrl: result.data.url,
+        }));
+        setMarksheetFile(null);
+        setSaveMessage({ type: "success", text: "Marksheet uploaded successfully!" });
+        setTimeout(() => setSaveMessage(null), 3000);
+      } else {
+        throw new Error(result.error || "Failed to upload marksheet");
+      }
+    } catch (error: any) {
+      console.error("Error uploading marksheet:", error);
+      setMarksheetUploadError(error.message || "Failed to upload marksheet. Please try again.");
+    } finally {
+      setIsUploadingMarksheet(false);
+    }
+  };
+
   // Load existing preferences
   useEffect(() => {
     const loadPreferences = async () => {
@@ -134,6 +217,13 @@ export default function PreferencesPage() {
           // Load academic preferences
           if (result.data.academic_preferences) {
             const academicData = { ...result.data.academic_preferences };
+            // Load marksheet URL if exists
+            if (academicData.marksheetUrl) {
+              setAcademicFormData((prev) => ({
+                ...prev,
+                marksheetUrl: academicData.marksheetUrl || "",
+              }));
+            }
             // Convert date strings to YYYY-MM-DD format for date inputs
             const dateFields = ['satDate', 'actDate', 'apDate', 'psatDate', 'toeflIeltsDate'];
             dateFields.forEach(field => {
@@ -207,6 +297,7 @@ export default function PreferencesPage() {
           subjectsTaken: academicFormData.subjectsTaken || "",
           gradeSubject: academicFormData.gradeSubject || "",
           gradeScore: academicFormData.gradeScore || "",
+          marksheetUrl: academicFormData.marksheetUrl || "",
           awards: academicFormData.awards || "",
           satScore: academicFormData.satScore || "",
           satDate: academicFormData.satDate || "",
@@ -712,12 +803,61 @@ export default function PreferencesPage() {
                             className="w-full h-[40px] rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
-                        <Link
-                          href="#"
-                          className="text-blue-600 text-sm underline whitespace-nowrap hover:text-blue-700 w-full sm:w-auto text-center sm:text-left"
-                        >
-                          Or Upload marksheet
-                        </Link>
+                      </div>
+                      <div className="mt-3">
+                        <p className="text-sm text-gray-600 mb-2">Or Upload marksheet</p>
+                        <div className="flex flex-col sm:flex-row gap-3 items-start">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg,.webp"
+                              onChange={handleMarksheetFileChange}
+                              className="hidden"
+                              disabled={isUploadingMarksheet}
+                            />
+                            <span className="inline-block px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                              {marksheetFile ? marksheetFile.name : "Choose File"}
+                            </span>
+                          </label>
+                          {marksheetFile && (
+                            <button
+                              type="button"
+                              onClick={handleMarksheetUpload}
+                              disabled={isUploadingMarksheet}
+                              className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {isUploadingMarksheet ? "Uploading..." : "Upload"}
+                            </button>
+                          )}
+                          {academicFormData.marksheetUrl && (
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={academicFormData.marksheetUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-green-600 hover:text-green-700 underline"
+                              >
+                                View Uploaded Marksheet
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAcademicFormData((prev) => ({ ...prev, marksheetUrl: "" }));
+                                  setMarksheetFile(null);
+                                }}
+                                className="text-sm text-red-600 hover:text-red-700"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {marksheetUploadError && (
+                          <p className="mt-2 text-sm text-red-600">{marksheetUploadError}</p>
+                        )}
+                        <p className="mt-1 text-xs text-gray-500">
+                          Accepted formats: PDF, PNG, JPEG, JPG, WEBP (Max 10MB)
+                        </p>
                       </div>
                     </div>
 
