@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Uniiq - College Admission Prediction System
 
-## Getting Started
+## Project Outline
 
-First, run the development server:
+It is a web application that predicts a student's chances of admission to universities based on their academic profile, test scores, extracurricular activities, and preferences. The system uses weighted vector calculations and machine learning techniques to provide personalized university recommendations and admission probability scores.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Mathematical Calculation Reference
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For detailed mathematical calculations and formulas used in the scoring algorithm, refer to:
+[Mathematical Calculations Reference](https://drive.google.com/file/d/1kdXRsLiwvbRLpztPLh5r5qcdOOan8hze/view?usp=sharing)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Weighted Vector Logic
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The system employs a weighted vector approach to calculate admission scores by assigning different weights to various factors:
 
-## Learn More
+- **Academic Factors**: SAT scores, GPA, subject grades
+- **Profile Factors**: Extracurricular activities, awards, standardized tests
+- **Fit Factors**: Major alignment, location preference, budget compatibility
 
-To learn more about Next.js, take a look at the following resources:
+Each category has sub-weights that sum to 1.0, and category weights determine the overall contribution of each factor group to the final score. The weighted vector calculation uses dot product and cosine similarity to match student profiles with university requirements.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Libraries Used
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **simple-statistics**: Provides statistical functions (mean, standard deviation, min, max) for data normalization and score calculations
+- **Next.js**: React framework for building the web application
+- **Supabase**: Backend-as-a-Service for database and authentication
+- **College Scorecard API**: External API for fetching university data and programs
 
-## Deploy on Vercel
+These libraries solve the score calculation problem by:
+- Normalizing student data using statistical methods (Min-Max, Z-Score normalization)
+- Performing weighted calculations to combine multiple factors
+- Fetching real-time university data for accurate matching
+- Storing and retrieving student profiles and preferences
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Research References
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The mathematical models and algorithms are based on research from:
+
+1. [College Admission Prediction Using Machine Learning](https://www.jetir.org/papers/JETIR2311129.pdf)
+2. [A University Admission Prediction System using Machine Learning and Deep Neural Networks](https://www.ijcrt.org/papers/IJCRT24A4920.pdf)
+3. [Multi-Criteria Decision Making in Education](https://journals.tultech.eu/index.php/qr/article/view/195)
+4. [Decision Making in College Admissions](https://becarispublishing.com/doi/10.2217/cer-2018-0102)
+5. [Multi-Criteria Decision Analysis (MCDA)](https://www.1000minds.com/decision-making/what-is-mcdm-mcda)
