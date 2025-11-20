@@ -38,7 +38,7 @@ interface ScoredCollege {
   };
 }
 
-interface WeightVector {
+export interface WeightVector {
   academic: {
     sat_score: number;
     cgpa: number;

@@ -82,12 +82,13 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // Update existing
-      const { data, error } = await supabaseAdmin
-        .from("smartadmit_data")
-        .update({
-          data: smartAdmitData,
-          updated_at: new Date().toISOString(),
-        })
+      const updateData = {
+        data: smartAdmitData,
+        updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await (supabaseAdmin
+        .from("smartadmit_data") as any)
+        .update(updateData)
         .eq("user_id", user.id)
         .select()
         .single();
@@ -100,8 +101,8 @@ export async function POST(request: NextRequest) {
       return ApiResponse.success(data);
     } else {
       // Create new
-      const { data, error } = await supabaseAdmin
-        .from("smartadmit_data")
+      const { data, error } = await (supabaseAdmin
+        .from("smartadmit_data") as any)
         .insert({
           user_id: user.id,
           data: smartAdmitData,
