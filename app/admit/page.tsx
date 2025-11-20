@@ -37,6 +37,13 @@ export default function AdmitPage() {
     duration: "",
     hoursPerWeek: "",
   });
+  const [showDetailedActivities, setShowDetailedActivities] = useState(false);
+  const [activityForms, setActivityForms] = useState<Array<{
+    title: string;
+    role: string;
+    duration: string;
+    hoursPerWeek: string;
+  }>>([{ title: "", role: "", duration: "", hoursPerWeek: "" }]);
 
   const majors = [
     "Computer Science",
@@ -164,6 +171,12 @@ export default function AdmitPage() {
     }
   };
 
+  const handleActivitySelect = (activity: string) => {
+    if (activity && !selectedActivities.includes(activity)) {
+      setSelectedActivities([...selectedActivities, activity]);
+    }
+  };
+
   const handleActivityInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && activityInput.trim() && !selectedActivities.includes(activityInput.trim())) {
       setSelectedActivities([...selectedActivities, activityInput.trim()]);
@@ -184,6 +197,22 @@ export default function AdmitPage() {
         duration: "",
         hoursPerWeek: "",
       });
+    }
+  };
+
+  const handleActivityFormChange = (index: number, field: string, value: string) => {
+    const updatedForms = [...activityForms];
+    updatedForms[index] = { ...updatedForms[index], [field]: value };
+    setActivityForms(updatedForms);
+  };
+
+  const handleAddMoreActivity = () => {
+    setActivityForms([...activityForms, { title: "", role: "", duration: "", hoursPerWeek: "" }]);
+  };
+
+  const handleRemoveActivityForm = (index: number) => {
+    if (activityForms.length > 1) {
+      setActivityForms(activityForms.filter((_, i) => i !== index));
     }
   };
 
@@ -208,7 +237,7 @@ export default function AdmitPage() {
         currentGrade,
         extracurricularHours,
         activities: selectedActivities,
-        detailedActivities: activities,
+        detailedActivities: showDetailedActivities ? activityForms.filter(f => f.title || f.role || f.duration) : activities,
       };
 
       const response = await fetch("/api/smartadmit", {
@@ -450,116 +479,124 @@ export default function AdmitPage() {
           {/* Step 4: GPA */}
           {currentStep === 4 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-black">What's your GPA?</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">GPA Scale</label>
-                  <select
-                    value={gpaScale}
-                    onChange={(e) => {
-                      setGpaScale(e.target.value);
-                      setGpaScore(""); // Clear GPA score when scale changes
-                      setGpaError(""); // Clear error
-                    }}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-black"
-                  >
-                    <option value="">Select scale</option>
-                    <option value="4.0">4.0 Scale</option>
-                    <option value="100">100 Scale</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">GPA Score</label>
-                  <input
-                    type="number"
-                    step={gpaScale === "4.0" ? "0.01" : "0.1"}
-                    value={gpaScore}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setGpaScore(value);
-                      
-                      // Validate GPA based on selected scale
-                      if (value === "") {
-                        setGpaError("");
-                      } else if (!gpaScale) {
-                        setGpaError("Please select a GPA scale first");
-                      } else {
-                        const numValue = parseFloat(value);
-                        if (isNaN(numValue)) {
-                          setGpaError("Please enter a valid number");
-                        } else if (gpaScale === "4.0") {
-                          if (numValue < 0 || numValue > 4.0) {
-                            setGpaError("GPA must be between 0.0 and 4.0 for 4.0 scale");
-                          } else {
-                            setGpaError("");
-                          }
-                        } else if (gpaScale === "100") {
-                          if (numValue < 0 || numValue > 100) {
-                            setGpaError("GPA must be between 0 and 100 for 100 scale");
-                          } else {
-                            setGpaError("");
-                          }
-                        } else if (gpaScale === "Other") {
-                          // For "Other" scale, allow any positive number but warn
-                          if (numValue < 0) {
-                            setGpaError("GPA cannot be negative");
-                          } else {
-                            setGpaError("");
-                          }
-                        }
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value;
-                      if (value !== "" && gpaScale) {
-                        const numValue = parseFloat(value);
-                        if (!isNaN(numValue)) {
-                          if (gpaScale === "4.0") {
-                            if (numValue < 0) {
-                              setGpaScore("0");
-                              setGpaError("");
-                            } else if (numValue > 4.0) {
-                              setGpaScore("4.0");
+              <h2 
+                className="text-black text-center"
+                style={{
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: 700,
+                  fontStyle: 'normal',
+                  fontSize: '30px',
+                  lineHeight: '130%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                }}
+              >
+                What is your cumulative GPA?
+              </h2>
+              <div className="mt-8">
+                <p className="text-sm text-black text-left mb-4">CHOOSE THE GPA SCALE USED AND ENTER YOUR SCORE:</p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <select
+                      value={gpaScale}
+                      onChange={(e) => {
+                        setGpaScale(e.target.value);
+                        setGpaScore(""); // Clear GPA score when scale changes
+                        setGpaError(""); // Clear error
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg text-black"
+                    >
+                      <option value="">--Select--</option>
+                      <option value="4.0">4.0 Scale</option>
+                      <option value="100">100 Scale</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      step={gpaScale === "4.0" ? "0.01" : "0.1"}
+                      value={gpaScore}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setGpaScore(value);
+                        
+                        // Validate GPA based on selected scale
+                        if (value === "") {
+                          setGpaError("");
+                        } else if (!gpaScale) {
+                          setGpaError("Please select a GPA scale first");
+                        } else {
+                          const numValue = parseFloat(value);
+                          if (isNaN(numValue)) {
+                            setGpaError("Please enter a valid number");
+                          } else if (gpaScale === "4.0") {
+                            if (numValue < 0 || numValue > 4.0) {
+                              setGpaError("GPA must be between 0.0 and 4.0 for 4.0 scale");
+                            } else {
                               setGpaError("");
                             }
                           } else if (gpaScale === "100") {
-                            if (numValue < 0) {
-                              setGpaScore("0");
+                            if (numValue < 0 || numValue > 100) {
+                              setGpaError("GPA must be between 0 and 100 for 100 scale");
+                            } else {
                               setGpaError("");
-                            } else if (numValue > 100) {
-                              setGpaScore("100");
+                            }
+                          } else if (gpaScale === "Other") {
+                            // For "Other" scale, allow any positive number but warn
+                            if (numValue < 0) {
+                              setGpaError("GPA cannot be negative");
+                            } else {
                               setGpaError("");
                             }
                           }
                         }
-                      }
-                    }}
-                    placeholder={
-                      gpaScale === "4.0" 
-                        ? "Enter GPA (0.0 - 4.0)" 
-                        : gpaScale === "100" 
-                        ? "Enter GPA (0 - 100)" 
-                        : "Enter your GPA"
-                    }
-                    disabled={!gpaScale}
-                    className={`w-full p-3 border rounded-lg text-black ${
-                      gpaError ? "border-red-500" : "border-gray-300"
-                    } ${!gpaScale ? "bg-gray-100 cursor-not-allowed" : ""}`}
-                  />
-                  {gpaError && (
-                    <p className="mt-2 text-sm text-red-600">{gpaError}</p>
-                  )}
-                  {gpaScale && !gpaError && (
-                    <p className="mt-2 text-xs text-gray-500">
-                      {gpaScale === "4.0" 
-                        ? "Valid range: 0.0 - 4.0" 
-                        : gpaScale === "100" 
-                        ? "Valid range: 0 - 100" 
-                        : "Enter your GPA value"}
-                    </p>
-                  )}
+                      }}
+                      onBlur={(e) => {
+                        const value = e.target.value;
+                        if (value !== "" && gpaScale) {
+                          const numValue = parseFloat(value);
+                          if (!isNaN(numValue)) {
+                            if (gpaScale === "4.0") {
+                              if (numValue < 0) {
+                                setGpaScore("0");
+                                setGpaError("");
+                              } else if (numValue > 4.0) {
+                                setGpaScore("4.0");
+                                setGpaError("");
+                              }
+                            } else if (gpaScale === "100") {
+                              if (numValue < 0) {
+                                setGpaScore("0");
+                                setGpaError("");
+                              } else if (numValue > 100) {
+                                setGpaScore("100");
+                                setGpaError("");
+                              }
+                            }
+                          }
+                        }
+                      }}
+                      placeholder="Enter Your Score"
+                      disabled={!gpaScale}
+                      className={`w-full p-3 border rounded-lg text-black ${
+                        gpaError ? "border-red-500" : "border-gray-300"
+                      } ${!gpaScale ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    />
+                  </div>
                 </div>
+                {gpaError && (
+                  <p className="mt-2 text-sm text-red-600">{gpaError}</p>
+                )}
+                {gpaScale && !gpaError && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    {gpaScale === "4.0" 
+                      ? "Valid range: 0.0 - 4.0" 
+                      : gpaScale === "100" 
+                      ? "Valid range: 0 - 100" 
+                      : "Enter your GPA value"}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -567,170 +604,357 @@ export default function AdmitPage() {
           {/* Step 5: Current Grade */}
           {currentStep === 5 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-black">What's your current grade?</h2>
-              <select
-                value={currentGrade}
-                onChange={(e) => setCurrentGrade(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg text-black"
+              <h2 
+                className="text-black text-center"
+                style={{
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: 700,
+                  fontStyle: 'normal',
+                  fontSize: '30px',
+                  lineHeight: '130%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                }}
               >
-                <option value="">Select grade</option>
-                <option value="9th Grade">9th Grade</option>
-                <option value="10th Grade">10th Grade</option>
-                <option value="11th Grade">11th Grade</option>
-                <option value="12th Grade">12th Grade</option>
-                <option value="Graduated">Graduated</option>
-              </select>
+                What is your current grade or class level?
+              </h2>
+              <div className="mt-8">
+                <select
+                  value={currentGrade}
+                  onChange={(e) => setCurrentGrade(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg text-black"
+                >
+                  <option value="">--Select--</option>
+                  <option value="9th Grade">9th Grade</option>
+                  <option value="10th Grade">10th Grade</option>
+                  <option value="11th Grade">11th Grade</option>
+                  <option value="12th Grade">12th Grade</option>
+                  <option value="Graduated">Graduated</option>
+                </select>
+              </div>
             </div>
           )}
 
           {/* Step 6: Extracurricular Hours */}
           {currentStep === 6 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-black">How many hours per week do you spend on extracurriculars?</h2>
-              <div className="space-y-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="40"
-                  value={extracurricularHours}
-                  onChange={(e) => setExtracurricularHours(parseInt(e.target.value))}
-                  className="w-full"
-                />
-                <div className="text-center text-lg font-semibold text-black">{extracurricularHours} hours/week</div>
+              <h2 
+                className="text-black text-center"
+                style={{
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: 700,
+                  fontStyle: 'normal',
+                  fontSize: '30px',
+                  lineHeight: '130%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                }}
+              >
+                On average, how many hours per week do you spend on extracurricular activities?
+              </h2>
+              <div className="space-y-4 mt-8">
+                <div className="relative">
+                  <input
+                    type="range"
+                    min="0"
+                    max="40"
+                    step="1"
+                    value={extracurricularHours}
+                    onChange={(e) => setExtracurricularHours(parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-step6"
+                    style={{
+                      background: `linear-gradient(to right, #E0BEBA 0%, #E0BEBA ${(extracurricularHours / 40) * 100}%, #e5e7eb ${(extracurricularHours / 40) * 100}%, #e5e7eb 100%)`,
+                    }}
+                  />
+                  <style jsx>{`
+                    .slider-step6::-webkit-slider-thumb {
+                      appearance: none;
+                      width: 20px;
+                      height: 20px;
+                      border-radius: 50%;
+                      background: #E0BEBA;
+                      cursor: pointer;
+                      border: 2px solid #ffffff;
+                      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                    }
+                    .slider-step6::-moz-range-thumb {
+                      width: 20px;
+                      height: 20px;
+                      border-radius: 50%;
+                      background: #E0BEBA;
+                      cursor: pointer;
+                      border: 2px solid #ffffff;
+                      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                    }
+                  `}</style>
+                  {/* Number labels below slider */}
+                  <div className="flex justify-between mt-2 px-1">
+                    <span className="text-sm text-black">0</span>
+                    <span className="text-sm text-black">5</span>
+                    <span className="text-sm text-black">10</span>
+                    <span className="text-sm text-black">15</span>
+                    <span className="text-sm text-black">20</span>
+                    <span className="text-sm text-black">25</span>
+                    <span className="text-sm text-black">30</span>
+                    <span className="text-sm text-black">35</span>
+                    <span className="text-sm text-black">40+</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* Step 7: Activities */}
-          {currentStep === 7 && (
+          {currentStep === 7 && !showDetailedActivities && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-black">Tell us about your activities</h2>
+              {/* First Screen: Main Question */}
+              <h2 
+                className="text-black text-center"
+                style={{
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: 700,
+                  fontStyle: 'normal',
+                  fontSize: '30px',
+                  lineHeight: '130%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                }}
+              >
+                Which types of extracurricular activities have you participated in?
+              </h2>
               
-              {/* Simple Activities */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-black">Select activities</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {["Sports", "Music", "Drama", "Debate", "Student Council", "Volunteer Work", "Research", "Internship", "Part-time Job"].map((activity) => (
-                    <button
-                      key={activity}
-                      onClick={() => toggleActivity(activity)}
-                      className={`p-3 rounded-lg border-2 text-sm text-black ${
-                        selectedActivities.includes(activity)
-                          ? "border-gray-900 bg-gray-50"
-                          : "border-gray-200"
-                      }`}
-                    >
-                      {activity}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Detailed Activities */}
-              <div className="space-y-4 border-t pt-6">
-                <h3 className="text-lg font-semibold text-black">Add detailed activity (optional)</h3>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Activity title"
-                    value={currentActivity.title}
-                    onChange={(e) => setCurrentActivity({ ...currentActivity, title: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-black"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Your role"
-                    value={currentActivity.role}
-                    onChange={(e) => setCurrentActivity({ ...currentActivity, role: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-black"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Duration (e.g., 2 years)"
-                    value={currentActivity.duration}
-                    onChange={(e) => setCurrentActivity({ ...currentActivity, duration: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-black"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    max="168"
-                    step="0.5"
-                    placeholder="Hours per week (0-168)"
-                    value={currentActivity.hoursPerWeek}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Validate hours (0-168, max hours in a week)
-                      if (value === "" || (parseFloat(value) >= 0 && parseFloat(value) <= 168)) {
-                        setCurrentActivity({ ...currentActivity, hoursPerWeek: value });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value;
-                      if (value !== "") {
-                        const numValue = parseFloat(value);
-                        if (numValue < 0) {
-                          setCurrentActivity({ ...currentActivity, hoursPerWeek: "0" });
-                        } else if (numValue > 168) {
-                          setCurrentActivity({ ...currentActivity, hoursPerWeek: "168" });
-                        }
-                      }
-                    }}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-black"
-                  />
-                  <button
-                    onClick={handleAddActivity}
-                    className="w-full p-3 bg-gray-200 text-black rounded-lg hover:bg-gray-300"
-                  >
-                    Add Activity
-                  </button>
-                </div>
+              <div className="mt-8">
+                <p className="text-sm text-black text-left mb-4">SELECT ALL THAT APPLY:</p>
+                <select
+                  value=""
+                  onChange={(e) => handleActivitySelect(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg text-black"
+                >
+                  <option value="">--Select--</option>
+                  {["Sports", "Music", "Drama", "Debate", "Student Council", "Volunteer Work", "Research", "Internship", "Part-time Job"]
+                    .filter(activity => !selectedActivities.includes(activity))
+                    .map((activity) => (
+                      <option key={activity} value={activity}>
+                        {activity}
+                      </option>
+                    ))}
+                </select>
                 
-                {activities.length > 0 && (
-                  <div className="space-y-2">
-                    {activities.map((activity, index) => (
-                      <div key={index} className="p-3 bg-gray-50 rounded-lg flex justify-between items-start">
-                        <div>
-                          <div className="font-medium text-black">{activity.title}</div>
-                          <div className="text-sm text-black">{activity.role} • {activity.duration}</div>
-                        </div>
+                {/* Display selected activities as chips */}
+                {selectedActivities.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {selectedActivities.map((activity) => (
+                      <div
+                        key={activity}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg"
+                      >
+                        <span className="text-sm">{activity}</span>
                         <button
-                          onClick={() => removeActivityFromList(index)}
-                          className="text-red-600 hover:text-red-700"
+                          onClick={() => toggleActivity(activity)}
+                          className="text-white hover:text-gray-300"
+                          type="button"
                         >
-                          Remove
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
+
+              {/* Optional detailed activities section */}
+              <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <p className="text-sm text-black">
+                    To improve your chances of an accurate SmartAdmit score, you can optionally answer a few short questions about your activities.
+                  </p>
+                  <button
+                    onClick={() => setShowDetailedActivities(true)}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 whitespace-nowrap flex items-center gap-1"
+                  >
+                    Answer now
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 7: More Questions (shown after Answer now is clicked) */}
+          {currentStep === 7 && showDetailedActivities && (
+            <div className="space-y-6">
+              <h2 
+                className="text-black text-center"
+                style={{
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: 700,
+                  fontStyle: 'normal',
+                  fontSize: '30px',
+                  lineHeight: '130%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                }}
+              >
+                More Questions
+              </h2>
+              
+              <div className="mt-8 space-y-6 max-w-2xl mx-auto">
+                {activityForms.map((form, formIndex) => (
+                  <div key={formIndex} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">Activity Title:</label>
+                      <input
+                        type="text"
+                        placeholder="Text"
+                        value={form.title}
+                        onChange={(e) => handleActivityFormChange(formIndex, "title", e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg text-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">Your Role:</label>
+                      <select
+                        value={form.role}
+                        onChange={(e) => handleActivityFormChange(formIndex, "role", e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg text-black"
+                      >
+                        <option value="">--Select--</option>
+                        <option value="Leader">Leader</option>
+                        <option value="Member">Member</option>
+                        <option value="Coordinator">Coordinator</option>
+                        <option value="Volunteer">Volunteer</option>
+                        <option value="Participant">Participant</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">Duration:</label>
+                      <select
+                        value={form.duration}
+                        onChange={(e) => handleActivityFormChange(formIndex, "duration", e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg text-black"
+                      >
+                        <option value="">--Select--</option>
+                        <option value="Less than 1 year">Less than 1 year</option>
+                        <option value="1 year">1 year</option>
+                        <option value="2 years">2 years</option>
+                        <option value="3 years">3 years</option>
+                        <option value="4+ years">4+ years</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">Hours per Week (optional):</label>
+                      <select
+                        value={form.hoursPerWeek}
+                        onChange={(e) => handleActivityFormChange(formIndex, "hoursPerWeek", e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg text-black"
+                      >
+                        <option value="">--Select--</option>
+                        <option value="1-5 hours">1-5 hours</option>
+                        <option value="6-10 hours">6-10 hours</option>
+                        <option value="11-15 hours">11-15 hours</option>
+                        <option value="16-20 hours">16-20 hours</option>
+                        <option value="20+ hours">20+ hours</option>
+                      </select>
+                    </div>
+                    {activityForms.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveActivityForm(formIndex)}
+                        className="text-sm text-red-600 hover:text-red-700"
+                        type="button"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Add more activities section */}
+              <div className="mt-8 flex items-center justify-between max-w-2xl mx-auto">
+                <h3 className="text-lg font-semibold text-black">Add more activities</h3>
+                <button
+                  onClick={handleAddMoreActivity}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                  type="button"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add
+                </button>
+              </div>
             </div>
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8">
+          <div className="flex justify-between mt-8 gap-6">
             <button
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className={`px-6 py-3 rounded-lg ${
-                currentStep === 1
+              onClick={() => {
+                if (currentStep === 7 && showDetailedActivities) {
+                  setShowDetailedActivities(false);
+                } else {
+                  handleBack();
+                }
+              }}
+              disabled={currentStep === 1 && !showDetailedActivities}
+              className={`flex items-center gap-1.5 ${
+                (currentStep === 1 && !showDetailedActivities)
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50"
               }`}
+              style={{
+                width: '91px',
+                height: '43px',
+                borderRadius: '6px',
+                paddingTop: '11px',
+                paddingRight: '14px',
+                paddingBottom: '11px',
+                paddingLeft: '18px',
+              }}
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
               Back
             </button>
             <button
               onClick={handleNext}
               disabled={isSaving}
-              className={`px-6 py-3 rounded-lg text-white ${
+              className={`flex items-center gap-1.5 text-white ${
                 isSaving
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-gray-900 hover:bg-gray-800"
               }`}
+              style={{
+                width: '91px',
+                height: '43px',
+                borderRadius: '6px',
+                paddingTop: '11px',
+                paddingRight: '14px',
+                paddingBottom: '11px',
+                paddingLeft: '18px',
+              }}
             >
-              {isSaving ? "Saving..." : currentStep === 7 ? "Submit & View Score" : "Next"}
+              {isSaving ? "Saving..." : currentStep === 7 ? "Submit" : "Next"}
+              {!isSaving && (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              )}
             </button>
           </div>
         </div>
